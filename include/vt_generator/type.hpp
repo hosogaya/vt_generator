@@ -11,6 +11,7 @@ using Scalar = double;
 using AdVector = std::vector<CppAD::AD<Scalar>>;
 using AdScalar = CppAD::AD<Scalar>;
 using Vector = Eigen::VectorXd;
+using Vector2 = Eigen::Vector2d;
 using Jacobian = ifopt::Component::Jacobian;
 
 class Index
