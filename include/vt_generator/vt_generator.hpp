@@ -1,5 +1,5 @@
 #pragma once
 
-#include <cppad/ipopt/solve.hpp>
-#include <cppad/cppad.hpp>
-
+#include <vt_generator/variable.hpp>
+#include <vt_generator/cost.hpp>
+#include <vt_generator/kbm.hpp>

@@ -13,6 +13,8 @@ using AdScalar = CppAD::AD<Scalar>;
 using Vector = Eigen::VectorXd;
 using Vector2 = Eigen::Vector2d;
 using Jacobian = ifopt::Component::Jacobian;
+using VecBound = ifopt::Component::VecBound;
+using Bound = ifopt::Bounds;
 
 class Index
 {
@@ -21,7 +23,7 @@ public:
     ~Index() {}
 
     int acc(const int ind) const {return size_*ind + acc_;}
-    int delta(const int ind) const {return size_*ind + delta_;}
+    int steer(const int ind) const {return size_*ind + steer_;}
     int n(const int ind) const {return size_*ind + n_;}
     int xi(const int ind) const {return size_*ind + xi_;}
     int vx(const int ind) const {return size_*ind + vx_;}
@@ -30,7 +32,7 @@ public:
     int size() const {return size_;}
 private:
     const int acc_ = 0;
-    const int delta_ = 1;
+    const int steer_ = 1;
     const int n_ = 2;
     const int xi_ = 3;
     const int vx_ = 4;
@@ -39,6 +41,8 @@ private:
     const int size_ = 7;
 
 };
+
+Index var_index;
 
 
 }
