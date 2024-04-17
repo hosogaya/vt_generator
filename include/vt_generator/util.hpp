@@ -30,8 +30,8 @@ inline Scalar calCurvature(const std::vector<Scalar>& xm, const std::vector<Scal
     int former = (index - width + xm.size())%xm.size();
     int later = (index + width)%xm.size();
 
-    Scalar area4 = 2*((xm[former] - xm[index])*(ym[later] - ym[index])
-                    - (ym[former] - ym[index])*(xm[later] - xm[index]));
+    Scalar area4 = 2*((xm[index] - xm[former])*(ym[later] - ym[index])
+                    - (ym[index] - ym[former])*(xm[later] - xm[index]));
 
     Scalar denominator = std::sqrt(std::pow(xm[former] - xm[index], 2.0) + std::pow(ym[former] - ym[index], 2.0))
                         +std::sqrt(std::pow(xm[later]  - xm[index], 2.0) + std::pow(ym[later]  - ym[index], 2.0))
