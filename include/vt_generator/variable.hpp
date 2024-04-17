@@ -8,11 +8,18 @@ class Variable: public ifopt::VariableSet
 {
 public: 
     Variable(const int horizon, const VecBound& b) :  
-        horizon_(horizon), bounds_(b), VariableSet(var_index.size()*horizon, "variables")
+        horizon_(horizon), VariableSet(denormalizer_.size()*horizon, "variables")
     {
-		    // acc, steer
+        // acc, steer
         // n, xi, vx, vy, omega
-        x_.resize(var_index.size()*horizon);
+        x_.resize(GetRows());
+        bounds_.resize(GetRows());
+        for (auto& bound: bounds_)
+        {
+            bound.lower_ =-1.0;
+            bound.upper_ = 1.0;
+        }
+        denormalizer_.setVariableBound(bounds_);
     }
 
     ~Variable() {}
@@ -30,13 +37,13 @@ public:
 
     VecBound GetBounds() const override
     {
-		  return bounds_;
+		return bounds_;
     }
 
 private:
     const int horizon_;
     Vector x_;
-    const VecBound bounds_;
+    VecBound bounds_;
 };
 
 }

@@ -11,7 +11,7 @@ int main()
         std::string csv_name = "../icra2023_1_course_info.csv";
         csv::Reader csv_reader(csv_name);
 
-        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.1);
+        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.05);
 
         for (size_t i=0; i<indexes.size(); ++i)
         {
@@ -29,7 +29,7 @@ int main()
     std::vector<Scalar> curvature;
     for (int i=0; i<horizon; ++i)
     {
-        curvature.push_back(calCurvature(xm, ym, i, 3));
+        curvature.push_back(calCurvature(xm, ym, i, 2));
     }
     std::vector<Scalar> ds;
     for (int i=0; i<horizon; ++i)
@@ -66,8 +66,8 @@ int main()
 
         Scalar lon_acc_min =-10.0;
         Scalar lon_acc_max = 10.0;
-        Scalar lat_acc_min =-10.0;
-        Scalar lat_acc_max = 10.0;
+        Scalar lat_acc_min =-1.0e4;
+        Scalar lat_acc_max = 1.0e4;
         Scalar steer_min =-M_PI*45.0/180;
         Scalar steer_max = M_PI*45.0/180;
         Scalar tread = 0.2; // m
@@ -79,34 +79,34 @@ int main()
         Scalar steer_diff_min =-M_PI*90/180;
         Scalar steer_diff_max = M_PI*90/180;
 
-        VecBound b_var(horizon*var_index.size());
+        VecBound b_var(horizon*denormalizer_.size());
         for (int i=0; i<horizon; ++i)
         {
-            b_var[var_index.acc(i)] = Bound(lon_acc_min, lon_acc_max);
-            b_var[var_index.steer(i)] = Bound(steer_min, steer_max);
-            b_var[var_index.n(i)] = Bound(-(tr_left[i] - tread/2.0), tr_right[i] - tread/2.0);
-            b_var[var_index.xi(i)] = Bound(-M_PI*45/180, M_PI*45/180);
-            b_var[var_index.vx(i)] = Bound(0.0, 20.0);
-            b_var[var_index.vy(i)] = Bound(-10.0, 10.0);
-            b_var[var_index.w(i)] =  Bound(-10*M_PI, 10*M_PI);
+            b_var[denormalizer_.acc(i)] = Bound(lon_acc_min, lon_acc_max);
+            b_var[denormalizer_.steer(i)] = Bound(steer_min, steer_max);
+            b_var[denormalizer_.n(i)] = Bound(-(tr_left[i] - tread/2.0), tr_right[i] - tread/2.0);
+            b_var[denormalizer_.xi(i)] = Bound(-M_PI*90/180, M_PI*90/180);
+            b_var[denormalizer_.vx(i)] = Bound(0.0, 20.0);
+            b_var[denormalizer_.vy(i)] = Bound(-100.0, 100.0);
+            b_var[denormalizer_.w(i)] =  Bound(-100*M_PI, 100*M_PI);
         }
 
-        VecBound b_costrants(horizon*9);
+        VecBound b_costrants(horizon*constraints_size_);
         for (int i=0; i<horizon; ++i)
         {
             // state equation
-            b_costrants[i*9 + 0] = ifopt::BoundZero;
-            b_costrants[i*9 + 1] = ifopt::BoundZero;
-            b_costrants[i*9 + 2] = ifopt::BoundZero;
-            b_costrants[i*9 + 3] = ifopt::BoundZero;
-            b_costrants[i*9 + 4] = ifopt::BoundZero;
+            b_costrants[i*constraints_size_ + 0] = ifopt::BoundZero;
+            b_costrants[i*constraints_size_ + 1] = ifopt::BoundZero;
+            b_costrants[i*constraints_size_ + 2] = ifopt::BoundZero;
+            b_costrants[i*constraints_size_ + 3] = ifopt::BoundZero;
+            b_costrants[i*constraints_size_ + 4] = ifopt::BoundZero;
             // slip angle
-            b_costrants[i*9 + 5] = Bound(beta_min, beta_max);
+            b_costrants[i*constraints_size_ + 5] = Bound(beta_min, beta_max);
             // lateral acc
-            b_costrants[i*9 + 6] = Bound(lat_acc_min, lat_acc_max);
+            b_costrants[i*constraints_size_ + 6] = Bound(lat_acc_min, lat_acc_max);
             // input 
-            b_costrants[i*9 + 7] = Bound(jark_min, jark_max);
-            b_costrants[i*9 + 8] = Bound(steer_diff_min, steer_diff_max);
+            // b_costrants[i*9 + 7] = Bound(jark_min, jark_max);
+            // b_costrants[i*9 + 8] = Bound(steer_diff_min, steer_diff_max);
         }
 
         std::cout << "make var, const, cost" << std::endl;
@@ -114,16 +114,16 @@ int main()
         std::shared_ptr<KBM> constraint = std::make_shared<KBM>(m, Iz, Cf, Cr, Lf, Lr, curvature, ds, b_costrants, horizon);
         std::shared_ptr<TimeCost> cost = std::make_shared<TimeCost>(horizon, curvature, ds);
 
-        Vector x_init(horizon*var_index.size());
+        Vector x_init(horizon*denormalizer_.size());
         for (int i=0; i<horizon; ++i)
         {
-            x_init(var_index.acc(i)) = 0.0;
-            x_init(var_index.steer(i)) = 0.0;
-            x_init(var_index.n(i)) = 0.0;
-            x_init(var_index.xi(i)) = 0.0;
-            x_init(var_index.vx(i)) = 1.0;
-            x_init(var_index.vy(i)) = 0.0;
-            x_init(var_index.w(i)) = 0.0;
+            x_init(denormalizer_.acc(i)) = 0.0;
+            x_init(denormalizer_.steer(i)) = 0.0;
+            x_init(denormalizer_.n(i)) = 0.0;
+            x_init(denormalizer_.xi(i)) = 0.0;
+            x_init(denormalizer_.vx(i)) = 1.0;
+            x_init(denormalizer_.vy(i)) = 0.0;
+            x_init(denormalizer_.w(i)) = 0.0;
         }
 
         var->SetVariables(x_init);
@@ -136,6 +136,8 @@ int main()
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
     solver.SetOption("max_iter", 3000);
+    solver.SetOption("limited_memory_max_history", 4); // default 6
+    solver.SetOption("tol", 1.0e-5);
     solver.Solve(prob);
     
     return 1;

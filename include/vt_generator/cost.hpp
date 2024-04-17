@@ -43,10 +43,12 @@ public:
 
         for (int i=0; i<horizon_; ++i)
         {
-            jac.coeffRef(0, var_index.n(i))  = ad_jac[var_index.n(i)];
-            jac.coeffRef(0, var_index.xi(i)) = ad_jac[var_index.xi(i)];
-            jac.coeffRef(0, var_index.vx(i)) = ad_jac[var_index.vx(i)];
-            jac.coeffRef(0, var_index.vy(i)) = ad_jac[var_index.vy(i)];
+            jac.coeffRef(0, denormalizer_.acc(i))   = ad_jac[denormalizer_.acc(i)];
+            jac.coeffRef(0, denormalizer_.steer(i)) = ad_jac[denormalizer_.steer(i)];
+            jac.coeffRef(0, denormalizer_.n(i))     = ad_jac[denormalizer_.n(i)];
+            jac.coeffRef(0, denormalizer_.xi(i))    = ad_jac[denormalizer_.xi(i)];
+            jac.coeffRef(0, denormalizer_.vx(i))    = ad_jac[denormalizer_.vx(i)];
+            jac.coeffRef(0, denormalizer_.vy(i))    = ad_jac[denormalizer_.vy(i)];
         }
     }
 
@@ -54,17 +56,17 @@ private:
     CppAD::ADFun<Scalar> getADFun() const
     {
         AdVector ay(1);
-        AdVector ax(var_index.size()*horizon_);
+        AdVector ax(denormalizer_.size()*horizon_);
         CppAD::Independent(ax);
 
         ay[0] = 0;
         for (int i=0; i<horizon_; ++i)
         {
-            auto& n = ax[var_index.n(i)];
-            auto& xi = ax[var_index.xi(i)];
-            auto& vx = ax[var_index.vx(i)];
-            auto& vy = ax[var_index.vy(i)];
-            auto& k = curvature_[i];
+            auto n  = denormalizer_.denormalizeN(ax, i);
+            auto xi = denormalizer_.denormalizeXi(ax, i);
+            auto vx = denormalizer_.denormalizeVx(ax, i);
+            auto vy = denormalizer_.denormalizeVy(ax, i);
+            auto& k  = curvature_[i];
 
             auto vx_inv = 1.0/(vx + CppAD::log(1 + CppAD::exp(-2*vx*alpha_))/alpha_);
             auto v = CppAD::pow(vx, 2) + CppAD::pow(vy, 2);
@@ -76,6 +78,8 @@ private:
             // auto beta = CppAD::atan2(vy, vx);
             // auto dtds = (1.0 - n*k) / (v*CppAD::cos(xi + beta));
             ay[0] += dtds*ds_[i];
+            ay[0] += CppAD::pow(ax.at(denormalizer_.acc((i+1)%horizon_))   - ax.at(denormalizer_.acc(i)),   2.0);
+            ay[0] += CppAD::pow(ax.at(denormalizer_.steer((i+1)%horizon_)) - ax.at(denormalizer_.steer(i)), 2.0);
         }
         return CppAD::ADFun<Scalar>(ax, ay);
     }
