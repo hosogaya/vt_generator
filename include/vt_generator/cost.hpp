@@ -18,7 +18,6 @@ public:
 
     Scalar GetCost() const override
     {
-        std::cout << "get value of cost" << std::endl;
         auto x = GetVariables()->GetComponent("variables")->GetValues();
         std::vector<Scalar> ax(x.size());
         for (int i=0; i<x.size(); ++i) 
@@ -32,7 +31,6 @@ public:
 
     void FillJacobianBlock(std::string var_name, Jacobian& jac) const override
     {
-        std::cout << "fill jacobian of cost" << std::endl;
         auto x = GetVariables()->GetComponent("variables")->GetValues();
         std::vector<Scalar> ax(x.size());
         for (int i=0; i<x.size(); ++i)

@@ -13,8 +13,10 @@ inline std::vector<int> thinout(const std::vector<Scalar>& xm, const std::vector
 {
     std::vector<int> indexes{0};
     Scalar dist = 0.0;
+    Scalar total = 0.0;
     for (int i=0; i<xm.size(); ++i)
     {   
+        total +=distance(xm, ym, i, (i+1)%xm.size()); 
         dist += distance(xm, ym, i, (i+1)%xm.size());
         if (dist > dist_thres)
         {
@@ -22,6 +24,7 @@ inline std::vector<int> thinout(const std::vector<Scalar>& xm, const std::vector
             dist = 0.0;
         };
     }
+    std::cout << total << std::endl;
     return indexes;
 }
 
@@ -46,6 +49,7 @@ inline Scalar calDs(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym
     Vector2 cur{xm[index], ym[index]};
     Vector2 lat{xm[later], ym[later]};
 
+    std::cout << "ds: " << (lat - cur).norm() << std::endl;
     return (lat - cur).norm();
 }
 

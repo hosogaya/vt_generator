@@ -82,6 +82,54 @@ public:
     {
         return 0.5*((1.0 - x)*b.lower_ + (1.0 + x)*b.upper_);
     }
+
+    template <typename T>
+    T daccdnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(acc(ind)), bounds_.at(acc(ind)));
+    }
+
+    template <typename T> 
+    T dsteerdnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(steer(ind)), bounds_.at(steer(ind)));
+    }
+
+    template <typename T> 
+    T dndnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(n(ind)), bounds_.at(n(ind)));
+    }
+
+    template <typename T> 
+    T dxidnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(xi(ind)), bounds_.at(xi(ind)));
+    }
+
+    template <typename T> 
+    T dvxdnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(vx(ind)), bounds_.at(vx(ind)));
+    }
+
+    template <typename T> 
+    T dvydnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(vy(ind)), bounds_.at(vy(ind)));
+    }
+
+    template <typename T> 
+    T dwdnorm(const std::vector<T>& x, const int ind)
+    {
+        return dxdnorm(x.at(w(ind)), bounds_.at(w(ind)));
+    }
+
+    template <typename T> 
+    T dxdnorm(const T& x, const Bound& b)
+    {
+        return 0.5*(-b.lower_ + b.upper_);
+    }
 private:
     const int acc_ = 0;
     const int steer_ = 1;

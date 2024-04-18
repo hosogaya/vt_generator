@@ -60,6 +60,7 @@ public:
             jac.coeffRef(i*size_ + 0, denormalizer_.xi(i)) = ad_jac[x.size()*(i*size_ + 0) + denormalizer_.xi(i)]; 
             jac.coeffRef(i*size_ + 0, denormalizer_.vx(i)) = ad_jac[x.size()*(i*size_ + 0) + denormalizer_.vx(i)]; 
             jac.coeffRef(i*size_ + 0, denormalizer_.vy(i)) = ad_jac[x.size()*(i*size_ + 0) + denormalizer_.vy(i)]; 
+            jac.coeffRef(i*size_ + 0, denormalizer_.n((i+1)%horizon_))  = ad_jac[x.size()*(i*size_ + 0) + denormalizer_.n((i+1)%horizon_)]; 
 
             // dxi/ds
             jac.coeffRef(i*size_ + 1, denormalizer_.n(i))  = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.n(i)]; 
@@ -67,6 +68,7 @@ public:
             jac.coeffRef(i*size_ + 1, denormalizer_.vx(i)) = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.vx(i)]; 
             jac.coeffRef(i*size_ + 1, denormalizer_.vy(i)) = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.vy(i)]; 
             jac.coeffRef(i*size_ + 1, denormalizer_.w(i))  = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.w(i)]; 
+            jac.coeffRef(i*size_ + 1, denormalizer_.xi((i+1)%horizon_)) = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.xi((i+1)%horizon_)]; 
             
             // dvx/ds
             jac.coeffRef(i*size_ + 2, denormalizer_.acc(i))   = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.acc(i)]; 
@@ -76,6 +78,7 @@ public:
             jac.coeffRef(i*size_ + 2, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.vx(i)]; 
             jac.coeffRef(i*size_ + 2, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.vy(i)]; 
             jac.coeffRef(i*size_ + 2, denormalizer_.w(i))     = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.w(i)]; 
+            jac.coeffRef(i*size_ + 2, denormalizer_.vx((i+1)%horizon_)) = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.vx((i+1)%horizon_)]; 
 
 
             // dvy/ds
@@ -85,6 +88,7 @@ public:
             jac.coeffRef(i*size_ + 3, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 3) + denormalizer_.vx(i)]; 
             jac.coeffRef(i*size_ + 3, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 3) + denormalizer_.vy(i)]; 
             jac.coeffRef(i*size_ + 3, denormalizer_.w(i))     = ad_jac[x.size()*(i*size_ + 3) + denormalizer_.w(i)]; 
+            jac.coeffRef(i*size_ + 3, denormalizer_.vy((i+1)%horizon_)) = ad_jac[x.size()*(i*size_ + 3) + denormalizer_.vy((i+1)%horizon_)]; 
 
             // dw/ds
             jac.coeffRef(i*size_ + 4, denormalizer_.steer(i)) = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.steer(i)]; 
@@ -93,24 +97,18 @@ public:
             jac.coeffRef(i*size_ + 4, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.vx(i)]; 
             jac.coeffRef(i*size_ + 4, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.vy(i)]; 
             jac.coeffRef(i*size_ + 4, denormalizer_.w(i))     = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.w(i)]; 
-            
-            // i+1 step
-            jac.coeffRef(i*size_ + 0, denormalizer_.n(i))  = ad_jac[x.size()*(i*size_ + 0) + denormalizer_.n((i+1)%horizon_)]; 
-            jac.coeffRef(i*size_ + 1, denormalizer_.xi(i)) = ad_jac[x.size()*(i*size_ + 1) + denormalizer_.xi((i+1)%horizon_)]; 
-            jac.coeffRef(i*size_ + 2, denormalizer_.vx(i)) = ad_jac[x.size()*(i*size_ + 2) + denormalizer_.vx((i+1)%horizon_)]; 
-            jac.coeffRef(i*size_ + 3, denormalizer_.vy(i)) = ad_jac[x.size()*(i*size_ + 3) + denormalizer_.vy((i+1)%horizon_)]; 
-            jac.coeffRef(i*size_ + 4, denormalizer_.w(i))  = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.w((i+1)%horizon_)]; 
+            jac.coeffRef(i*size_ + 4, denormalizer_.w((i+1)%horizon_))  = ad_jac[x.size()*(i*size_ + 4) + denormalizer_.w((i+1)%horizon_)]; 
 
 
             // slip angle 
-            jac.coeffRef(i*size_ + 5, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 5) + denormalizer_.vx(i)]; 
-            jac.coeffRef(i*size_ + 5, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 5) + denormalizer_.vy(i)];
+            // jac.coeffRef(i*size_ + 5, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 5) + denormalizer_.vx(i)]; 
+            // jac.coeffRef(i*size_ + 5, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 5) + denormalizer_.vy(i)];
 
             // lateral acc
-            jac.coeffRef(i*size_ + 6, denormalizer_.steer(i)) = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.w(i)]; 
-            jac.coeffRef(i*size_ + 6, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.vx(i)]; 
-            jac.coeffRef(i*size_ + 6, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.vy(i)]; 
-            jac.coeffRef(i*size_ + 6, denormalizer_.w(i))     = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.w(i)]; 
+            // jac.coeffRef(i*size_ + 6, denormalizer_.steer(i)) = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.w(i)]; 
+            // jac.coeffRef(i*size_ + 6, denormalizer_.vx(i))    = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.vx(i)]; 
+            // jac.coeffRef(i*size_ + 6, denormalizer_.vy(i))    = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.vy(i)]; 
+            // jac.coeffRef(i*size_ + 6, denormalizer_.w(i))     = ad_jac[x.size()*(i*size_ + 6) + denormalizer_.w(i)]; 
 
             // input
             // jac.coeffRef(i*size_ + 7, denormalizer_.acc(i))     = ad_jac[x.size()*(i*size_ + 7) + denormalizer_.acc(i)]; 
@@ -118,6 +116,7 @@ public:
             // jac.coeffRef(i*size_ + 8, denormalizer_.steer(i))   = ad_jac[x.size()*(i*size_ + 8) + denormalizer_.steer(i)]; 
             // jac.coeffRef(i*size_ + 8, denormalizer_.steer(i))   = ad_jac[x.size()*(i*size_ + 8) + denormalizer_.steer((i+1)%horizon_)]; 
         }
+
     }
 
 private:
@@ -179,9 +178,9 @@ private:
             ay[i*size_ + 4] = denormalizer_.denormalizeW(ax, (i+1)%horizon_) - (w  + (ff*Lf_*CppAD::cos(steer) - fr*Lr_)*dtds*ds_.at(i));
             
             // slip angle
-            ay[i*size_ + 5] = beta;
+            // ay[i*size_ + 5] = beta;
             // lateral acc
-            ay[i*size_ + 6] = (ff + fr)/m_;
+            // ay[i*size_ + 6] = (ff + fr)/m_;
 
             // input
             // ay[i*size_ + 7] = denormalizer_.denormalizeAcc(ax, (i+1)%horizon_) - acc;
@@ -207,7 +206,7 @@ private:
     const Scalar Lf_;
     const Scalar Lr_;
 
-    const int size_ = 7;
+    const int size_;
     const int horizon_;
     const std::vector<Scalar> curvature_;
     const std::vector<Scalar> ds_;

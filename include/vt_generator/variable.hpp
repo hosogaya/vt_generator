@@ -19,7 +19,7 @@ public:
             bound.lower_ =-1.0;
             bound.upper_ = 1.0;
         }
-        denormalizer_.setVariableBound(bounds_);
+        denormalizer_.setVariableBound(b);
     }
 
     ~Variable() {}
