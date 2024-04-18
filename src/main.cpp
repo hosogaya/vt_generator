@@ -4,6 +4,9 @@
 
 #include <vt_generator/csv/csv_writer.hpp>
 
+#include <vt_generator/path_smoother/cost.hpp>
+#include <vt_generator/path_smoother/variable.hpp>
+
 using namespace vt_generator;
 
 int main()
@@ -13,7 +16,7 @@ int main()
         std::string csv_name = "../icra2023_1_course_info.csv";
         csv::Reader csv_reader(csv_name);
 
-        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.05);
+        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.01);
 
         for (size_t i=0; i<indexes.size(); ++i)
         {
@@ -23,6 +26,7 @@ int main()
             tr_right.push_back(csv_reader.tr_right()[indexes[i]]);
         }
     }
+
 
     const int horizon = xm.size();
     const int width = 5;
