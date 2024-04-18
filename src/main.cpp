@@ -25,13 +25,14 @@ int main()
     }
 
     const int horizon = xm.size();
+    const int width = 5;
 
     std::cout << "horizon: " << horizon << std::endl;
     
     std::vector<Scalar> curvature;
     for (int i=0; i<horizon; ++i)
     {
-        curvature.push_back(calCurvature(xm, ym, i, 2));
+        curvature.push_back(calCurvature(xm, ym, i, width));
     }
     std::vector<Scalar> ds;
     Scalar total = 0.0;
@@ -47,7 +48,6 @@ int main()
             std::cout << "there is nan in curvature" << std::endl;
             return 1;
         }
-        std::cout << k << std::endl;
     }
 
     for (const auto k: ds)
@@ -68,15 +68,15 @@ int main()
         Scalar Lf = 0.162;
         Scalar Lr = 0.162;
 
-        Scalar lon_acc_min =-5.0e1;
-        Scalar lon_acc_max = 5.0e1;
+        Scalar lon_acc_min =-1.5e1;
+        Scalar lon_acc_max = 1.5e1;
         Scalar lat_acc_min =-1.0e1;
         Scalar lat_acc_max = 1.0e1;
         Scalar steer_min =-M_PI*20.0/180;
         Scalar steer_max = M_PI*20.0/180;
         Scalar tread = 0.2; // m
-        Scalar beta_min =-M_PI*5/180;
-        Scalar beta_max = M_PI*5/180;
+        Scalar beta_min =-M_PI*10/180;
+        Scalar beta_max = M_PI*10/180;
 
         VecBound b_var(horizon*denormalizer_.size());
         for (int i=0; i<horizon; ++i)
@@ -86,7 +86,7 @@ int main()
             b_var[denormalizer_.n(i)] = Bound(-(tr_right[i] - tread/2.0), tr_left[i] - tread/2.0);
             b_var[denormalizer_.xi(i)] = Bound(-M_PI*30/180, M_PI*30/180);
             b_var[denormalizer_.vx(i)] = Bound(1.0, 20.0);
-            b_var[denormalizer_.vy(i)] = Bound(-8.0, 8.0);
+            b_var[denormalizer_.vy(i)] = Bound(-10.0, 10.0);
             b_var[denormalizer_.w(i)] =  Bound(-4*M_PI, 4*M_PI);
         }
 
@@ -105,7 +105,6 @@ int main()
             b_costrants[i*constraints_size_ + 6] = Bound(beta_min, beta_max);
         }
 
-        std::cout << "make var, const, cost" << std::endl;
         std::shared_ptr<Variable> var = std::make_shared<Variable>(horizon, b_var);
         std::shared_ptr<KBM> constraint = std::make_shared<KBM>(m, Iz, Cf, Cr, Lf, Lr, curvature, ds, b_costrants, horizon);
         std::shared_ptr<TimeCost> cost = std::make_shared<TimeCost>(horizon, curvature, ds);
@@ -131,7 +130,7 @@ int main()
     ifopt::IpoptSolver solver;
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
-    solver.SetOption("max_iter", 10000);
+    solver.SetOption("max_iter", 100);
     solver.SetOption("limited_memory_max_history", 6); // default 6
     solver.SetOption("tol", 1.0e-4);
     solver.SetOption("constr_viol_tol", 0.0001);
@@ -140,8 +139,8 @@ int main()
     // solver.SetOption("least_square_init_primal", "yes");
     // solver.SetOption("least_square_init_duals", "yes");
 
-    solver.SetOption("acceptable_iter", 1000);
-    solver.SetOption("acceptable_tol", 1.0e-2);
+    solver.SetOption("acceptable_iter", 100);
+    solver.SetOption("acceptable_tol", 1.0e-3);
     solver.SetOption("acceptable_constr_viol_tol", 0.001);
     solver.Solve(prob);
 
@@ -150,12 +149,52 @@ int main()
         csv::Writer writer("opt_x_success.csv");
         writer.writeResult(prob.GetOptVariables()->GetValues(), horizon);   
     }
+    else if (solver.GetReturnStatus() == 1)
+    {
+        csv::Writer writer("opt_x_acceptable.csv");
+        writer.writeResult(prob.GetOptVariables()->GetValues(), horizon);
+    }
     else
     {
         csv::Writer writer("opt_x_failed.csv");
         writer.writeResult(prob.GetOptVariables()->GetValues(), horizon);
     }
 
+    std::vector<Scalar> opt_var(horizon*denormalizer_.size());
+    for (int i=0; i<prob.GetOptVariables()->GetValues().size(); ++i)
+    {
+        opt_var[i] = prob.GetOptVariables()->GetValues()(i);
+    }
     
+    // opt_x, opt_y, outer_width, inner_width
+    // center_x, center_y, outer_x, outer_y inner_x, inner_y
+    // curvature, ref_v
+    std::vector<Scalar> opt_x  (xm.size()), opt_y  (ym.size()),
+                        outer_x(xm.size()), outer_y(ym.size()),
+                        inner_x(xm.size()), inner_y(ym.size()),
+                        ref_v  (xm.size());
+    for (size_t i=0; i<xm.size(); ++i)
+    {
+        auto normal = calNormalVector(xm, ym, i, width);
+        if (curvature[i] > 0) normal = -normal;
+        if (normal.norm() < 0.5) std::cout << "failed to cal normal" << std::endl;
+
+        opt_x[i]   = xm.at(i) + normal.x()*denormalizer_.denormalizeN(opt_var, i);
+        opt_y[i]   = ym.at(i) + normal.y()*denormalizer_.denormalizeN(opt_var, i);
+        outer_x[i] = xm.at(i) - normal.x()*tr_right.at(i);
+        outer_y[i] = ym.at(i) - normal.y()*tr_right.at(i);
+        inner_x[i] = xm.at(i) + normal.x()*tr_left.at(i);
+        inner_y[i] = ym.at(i) + normal.y()*tr_left.at(i);
+        ref_v[i]   = denormalizer_.denormalizeVx(opt_var, i);
+    }
+    csv::Writer path_writer("opt_trajectory.csv");
+    path_writer.writeResult(opt_x,     opt_y, 
+                            tr_right,  tr_left, 
+                            xm,        ym, 
+                            outer_x,   outer_y, 
+                            inner_x,   inner_y, 
+                            curvature, ref_v, 
+                            horizon);
+
     return 1;
 }

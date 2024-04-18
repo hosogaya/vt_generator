@@ -18,7 +18,13 @@ public:
 
     bool isOpen() const {return is_open_;}
     void writeResult(const Vector& x_opt, const int horizon);
-
+    void writeResult(const std::vector<Scalar>& opt_x,    const std::vector<Scalar>& opt_y,
+                     const std::vector<Scalar>& outer_w,  const std::vector<Scalar>& inner_w,
+                     const std::vector<Scalar>& center_x, const std::vector<Scalar>& center_y,
+                     const std::vector<Scalar>& outer_x,  const std::vector<Scalar>& outer_y,
+                     const std::vector<Scalar>& inner_x,  const std::vector<Scalar>& inner_y,
+                     const std::vector<Scalar>& curvature,const std::vector<Scalar>& ref_v,
+                     const int horizon);
 private:
     bool is_open_ = false;
     std::ofstream output_file_;
@@ -33,7 +39,10 @@ Writer::Writer(const std::string& file_name)
         return;
     }
     is_open_ = true;
+}
 
+void Writer::writeResult(const Vector& x_opt, const int horizon)
+{
     output_file_ << "acc"   << ","
                  << "steer" << ","
                  << "n"     << ","
@@ -41,10 +50,6 @@ Writer::Writer(const std::string& file_name)
                  << "vx"    << ","
                  << "vy"    << ","
                  << "w"     << std::endl;
-}
-
-void Writer::writeResult(const Vector& x_opt, const int horizon)
-{
     std::vector<Scalar> ax(x_opt.size());
     for (int i=0; i<x_opt.size(); ++i) ax[i] = x_opt(i);
     for (int i=0; i<horizon; ++i)
@@ -56,6 +61,47 @@ void Writer::writeResult(const Vector& x_opt, const int horizon)
         output_file_ << denormalizer_.denormalizeVx(ax, i)   << ",";
         output_file_ << denormalizer_.denormalizeVy(ax, i)   << ",";
         output_file_ << denormalizer_.denormalizeW(ax, i)    << std::endl;
+    }
+}
+
+// opt_x, opt_y, outer_width, inner_width
+// center_x, center_y, outer_x, outer_y inner_x, inner_y
+// curvature, ref_v
+void Writer::writeResult(const std::vector<Scalar>& opt_x,    const std::vector<Scalar>& opt_y,
+                         const std::vector<Scalar>& outer_w,  const std::vector<Scalar>& inner_w,
+                         const std::vector<Scalar>& center_x, const std::vector<Scalar>& center_y,
+                         const std::vector<Scalar>& outer_x,  const std::vector<Scalar>& outer_y,
+                         const std::vector<Scalar>& inner_x,  const std::vector<Scalar>& inner_y,
+                         const std::vector<Scalar>& curvature,const std::vector<Scalar>& ref_v, 
+                         const int horizon)
+{
+    output_file_ << "opt_x"       << ","
+                 << "opt_y"       << ","
+                 << "outer_width" << ","
+                 << "inner_width" << ","
+                 << "center_x"    << ","
+                 << "center_y"    << ","
+                 << "outer_x"     << ","
+                 << "outer_y"     << ","
+                 << "inner_x"     << ","
+                 << "inner_y"     << ","
+                 << "curvature"   << ","
+                 << "ref_v"       << std::endl;
+
+    for (int i=0; i<horizon; ++i)
+    {
+        output_file_ << opt_x[i]     << ","
+                     << opt_y[i]     << ","
+                     << outer_w[i]   << ","
+                     << inner_w[i]   << ","
+                     << center_x[i]  << ","
+                     << center_y[i]  << ","
+                     << outer_x[i]   << ","
+                     << outer_y[i]   << ","
+                     << inner_x[i]   << ","
+                     << inner_y[i]   << ","
+                     << curvature[i] << ","
+                     << ref_v[i]     << std::endl;
     }
 }
 
