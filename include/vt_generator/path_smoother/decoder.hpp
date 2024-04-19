@@ -32,6 +32,16 @@ public:
         return 0.5*((1.0 - x)*bounds_.at(2*index+1).lower_ + (1.0 + x)*bounds_.at(2*index+1).upper_);
     }
 
+    Scalar dxdn(const int index)
+    {
+        return 0.5*(-bounds_.at(2*index).lower_ + bounds_.at(2*index).upper_);
+    }
+
+    Scalar dydn(const int index)
+    {
+        return 0.5*(-bounds_.at(2*index+1).lower_ + bounds_.at(2*index+1).upper_);
+    }
+
     void setBounds(const VecBound& b) 
     {
         bounds_ = b;

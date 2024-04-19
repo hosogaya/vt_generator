@@ -1,0 +1,18 @@
+course_prep:
+  is_clockwise: false
+  interpolation_max_gap: 0.01
+  thin_out_min_gap: 0.05
+  # crop_length: 1.2
+  crop_length: 0.3 # prev
+
+visualization:
+  bgr_list:
+    [
+      [0, 0, 255],
+      [0, 255, 0],
+      [255, 0, 0],
+      [255, 255, 0],
+      [255, 0, 255],
+      [0, 255, 255],
+    ]
+  line_thickness: 1

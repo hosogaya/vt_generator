@@ -11,11 +11,10 @@ class Variable: public ifopt::VariableSet
 {
 public: 
     Variable(const int horizon) :  
-        horizon_(horizon), VariableSet(horizon, "variable")
+        horizon_(horizon), VariableSet(horizon, "variables")
     {
-        // acc, steer
-        // n, xi, vx, vy, omega
         x_.resize(GetRows());
+        x_.fill(0.0);
         bounds_.resize(GetRows());
         for (auto& bound: bounds_)
         {
