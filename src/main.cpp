@@ -12,16 +12,16 @@ using namespace vt_generator;
 int main()
 {
     std::vector<Scalar> xm, ym, tr_left, tr_right, outer_x, outer_y, inner_x, inner_y;
-    std::vector<Scalar> x_smooth, y_smooth, curvature;
+    std::vector<Scalar> curvature;
     std::vector<Vector2> normal;
-    std::string csv_name = "../data/icra2023_1/icra2023_1_course_info.csv";
-    const int width = 3;
+    std::string csv_name = "../data/icra20getADfun23_1/icra2023_1_course_info.csv";
+    const int width = 10;
     {
         csv::Reader csv_reader(csv_name);
         if (!csv_reader.isOpen()) return -1;
 
-        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.05);
-        // std::vector<int> indexes(csv_reader.size());
+        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.02);
+        // std::vector<int> indexes(csv_reader.xm().size());
         // for (int i=0; i<indexes.size(); ++i) indexes[i] = i;
 
         for (size_t i=0; i<indexes.size(); ++i)
@@ -35,72 +35,28 @@ int main()
             inner_x.push_back(csv_reader.inner_x()  [indexes.at(i)]);
             inner_y.push_back(csv_reader.inner_y()  [indexes.at(i)]);
         }
-
-        VecBound b_pos(indexes.size()*2); // xy
-        for (size_t i=0; i<indexes.size(); ++i)
-        {
-            b_pos[2*i].lower_ = inner_x[i]; 
-            b_pos[2*i].upper_ = outer_x[i]; 
-            b_pos[2*i + 1].lower_ = inner_y[i + 1];
-            b_pos[2*i + 1].upper_ = outer_y[i + 1];
-        }
-        using namespace vt_generator;
-        path_smoother::decorder_.setBounds(b_pos);
-        std::shared_ptr<path_smoother::Variable> var = std::make_shared<path_smoother::Variable>(indexes.size());
-        std::shared_ptr<path_smoother::Cost>    cost = std::make_shared<path_smoother::Cost>(    indexes.size());
-
-        ifopt::Problem prob;
-        prob.AddCostSet(cost);
-        prob.AddVariableSet(var);
-
-        ifopt::IpoptSolver solver;
-        solver.SetOption("print_level", 5);
-        solver.SetOption("max_cpu_time", 1.0e20);
-        solver.SetOption("max_iter", 1000);
-        solver.SetOption("tol", 1.0e-4);
-        solver.Solve(prob);
-
-        // if (solver.GetReturnStatus() == 0 || solver.GetReturnStatus() == 1)
-        {
-            x_smooth.resize(xm.size());
-            y_smooth.resize(ym.size());
-            curvature.resize(xm.size());
-            csv::Writer writer("smooth_path.csv");
-            auto opt_var = prob.GetOptVariables()->GetValues();
-            for (size_t i=0; i<xm.size(); ++i)
-            {
-                x_smooth[i] = path_smoother::decorder_.decodeX(opt_var(i), i);
-                y_smooth[i] = path_smoother::decorder_.decodeY(opt_var(i), i);
-            }
-            std::cout << std::endl;
-            for (size_t i=0; i<x_smooth.size(); ++i)
-            {
-                curvature[i] = calCurvature(x_smooth, y_smooth, i, width);
-            }
-            writer.writeResult(x_smooth, y_smooth, tr_left, tr_right, xm, ym,
-                               outer_x, outer_y, inner_x, inner_y, curvature, x_smooth, xm.size());
-        }
     }
 
-    const int horizon = x_smooth.size();
+    return 1;
+    const int horizon = xm.size();
 
     std::cout << "horizon: " << horizon << std::endl;
     
     // std::vector<Scalar> curvature;
     // for (int i=0; i<horizon; ++i)
     // {
-    //     curvature.push_back(calCurvature(xm, y_smooth, i, width));
+    //     curvature.push_back(calCurvature(xm, ym, i, width));
     // }
     for (int i=0; i<horizon; ++i)
     {
-        normal.push_back(calNormalVector(x_smooth, y_smooth, i, width));
+        normal.push_back(calNormalVector(xm, ym, i, width));
         if (curvature[i] > 0) normal[i] = -normal[i];
     } 
     std::vector<Scalar> ds;
     Scalar total = 0.0;
     for (int i=0; i<horizon; ++i)
     {
-        ds.push_back(calDs(x_smooth, y_smooth, i));
+        ds.push_back(calDs(xm, ym, i));
     }
 
     for (const auto k: curvature)
@@ -192,7 +148,7 @@ int main()
     ifopt::IpoptSolver solver;
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
-    solver.SetOption("max_iter", 2000);
+    solver.SetOption("max_iter", 10000);
     solver.SetOption("limited_memory_max_history", 6); // default 6
     solver.SetOption("tol", 1.0e-4);
     solver.SetOption("constr_viol_tol", 0.0001);
@@ -202,7 +158,7 @@ int main()
     // solver.SetOption("least_square_init_duals", "yes");
 
     solver.SetOption("acceptable_iter", 100);
-    solver.SetOption("acceptable_tol", 1.0e-3);
+    solver.SetOption("acceptable_tol", 1.0e-2);
     solver.SetOption("acceptable_constr_viol_tol", 0.001);
     solver.Solve(prob);
 
@@ -231,22 +187,22 @@ int main()
     // opt_x, opt_y, outer_width, inner_width
     // center_x, center_y, outer_x, outer_y inner_x, inner_y
     // curvature, ref_v
-    std::vector<Scalar> opt_x  (x_smooth.size()), opt_y  (y_smooth.size()),
-                        ref_v  (x_smooth.size());
-    for (size_t i=0; i<x_smooth.size(); ++i)
+    std::vector<Scalar> opt_x  (xm.size()), opt_y  (ym.size()),
+                        ref_v  (xm.size());
+    for (size_t i=0; i<xm.size(); ++i)
     {
-        auto normal = calNormalVector(x_smooth, y_smooth, i, width);
+        auto normal = calNormalVector(xm, ym, i, width);
         if (curvature[i] > 0) normal = -normal;
         if (normal.norm() < 0.5) std::cout << "failed to cal normal" << std::endl;
 
-        opt_x[i]   = x_smooth.at(i) + normal.x()*denormalizer_.denormalizeN(opt_var, i);
-        opt_y[i]   = y_smooth.at(i) + normal.y()*denormalizer_.denormalizeN(opt_var, i);
+        opt_x[i]   = xm.at(i) + normal.x()*denormalizer_.denormalizeN(opt_var, i);
+        opt_y[i]   = ym.at(i) + normal.y()*denormalizer_.denormalizeN(opt_var, i);
         ref_v[i]   = denormalizer_.denormalizeVx(opt_var, i);
     }
     csv::Writer path_writer("opt_trajectory.csv");
     path_writer.writeResult(opt_x,     opt_y, 
                             tr_right,  tr_left, 
-                            x_smooth,        y_smooth, 
+                            xm,        ym, 
                             outer_x,   outer_y, 
                             inner_x,   inner_y, 
                             curvature, ref_v, 

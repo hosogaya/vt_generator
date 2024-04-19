@@ -21,8 +21,24 @@ target_link_libraries(${PROJECT_NAME}
   autodiff::autodiff
 )
 
+add_executable(path_smoother src/path_smooth.cpp)
+
+target_include_directories(path_smoother
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(path_smoother
+  ifopt::ifopt_ipopt
+  autodiff::autodiff
+)
+
+
 install(
     TARGETS ${PROJECT_NAME}
+    TARGETS path_smoother
 )
 
 install(

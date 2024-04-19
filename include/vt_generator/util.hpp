@@ -49,7 +49,6 @@ inline Scalar calDs(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym
     Vector2 cur{xm[index], ym[index]};
     Vector2 lat{xm[later], ym[later]};
 
-    std::cout << "ds: " << (lat - cur).norm() << std::endl;
     return (lat - cur).norm();
 }
 

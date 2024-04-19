@@ -27,7 +27,7 @@ public:
         {
            int former = (i-1+horizon_)%horizon_;
            int later  = (i+1)%horizon_;
-           value -= (ax[later] - ax[i]).dot(ax[i] - ax[later])/(ax[later] - ax[i]).norm()/(ax[i] - ax[former]).norm();
+           value -= (ax[later] - ax[i]).dot(ax[i] - ax[former])/(ax[later] - ax[i]).norm()/(ax[i] - ax[former]).norm();
         }
 
         // std::vector<Scalar> ax(x.size());
@@ -107,6 +107,32 @@ private:
             
             ay[0] -= dot/fnorm/lnorm;
         }
+        return CppAD::ADFun<Scalar>(ax, ay);
+    }
+
+    CppAD::ADFun<Scalar> getADFunCurvature() const 
+    {
+        AdVector ax(horizon_);
+        AdVector ay(1);
+        CppAD::Independent(ax);
+
+        for (int i=0; i<horizon_; ++i)
+        {
+            auto fx = decorder_.decodeX(ax[(i-1+horizon_)%horizon_], (i-1+horizon_)%horizon_);
+            auto fy = decorder_.decodeY(ax[(i-1+horizon_)%horizon_], (i-1+horizon_)%horizon_);
+            auto cx = decorder_.decodeX(ax[i], i);
+            auto cy = decorder_.decodeY(ax[i], i);
+            auto lx = decorder_.decodeX(ax[(i+1)%horizon_], (i+1)%horizon_);
+            auto ly = decorder_.decodeY(ax[(i+1)%horizon_], (i+1)%horizon_);
+
+            auto area4 = 2*((cx - fx)*(ly - cy) - (cy - fy)*(lx - cx));
+            auto denominater = CppAD::sqrt(CppAD::pow(fx - cx, 2.0) + CppAD::pow(fy - cy, 2.0)
+                                          +CppAD::pow(lx - cx, 2.0) + CppAD::pow(ly - cy, 2.0)
+                                          +CppAD::pow(fx - lx, 2.0) + CppAD::pow(fy - ly, 2.0));
+
+            ay[0] += area4/denominater;
+        }
+
         return CppAD::ADFun<Scalar>(ax, ay);
     }
     
