@@ -9,6 +9,34 @@ inline Scalar distance(const std::vector<Scalar>& xm, const std::vector<Scalar>&
     return std::sqrt(std::pow(xm[i1] - xm[i2], 2.0) + std::pow(ym[i1] - ym[i2], 2.0));
 }
 
+inline Scalar outer(const Vector2& v1, const Vector2& v2)
+{
+    return v1.x()*v2.y() - v1.y()*v2.x();
+}
+
+inline bool calClosestPoint(const Vector2& point, const Vector2& ls, const Vector2& le, Vector2& cp)
+{
+    Vector2 vp = point - ls;
+    Vector2 ve = le - ls;
+
+    Scalar t = vp.dot(ve)/ve.norm();
+    if (t > ve.norm())
+    {
+        cp = le;
+        return false;
+    }
+    else if (t < 0.0) 
+    {
+        cp = ls;
+        return false;
+    }
+    else {
+        cp = ls + ve.normalized()*t;
+        return true;
+    }
+}
+
+
 inline std::vector<int> thinout(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym, const Scalar dist_thres)
 {
     std::vector<int> indexes{0};
@@ -86,13 +114,41 @@ inline Vector calNormalVector(const std::vector<Scalar>& xm, const std::vector<S
     normal.x() = xm[index] - center_x;
     normal.y() = ym[index] - center_y;
 
-    // normal.normalize();
+    Vector2 direction;
+    direction.x() = xm[later] - xm[index];
+    direction.y() = ym[later] - ym[index];
 
-    // Vector2 tangent;
-    // tangent.x() = normal.y();
-    // tangent.y() =-normal.x();
+    if (outer(direction, normal) < 0.0) normal = -normal;
 
     return normal.normalized();
+}
+
+inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& center, const std::vector<Scalar>& line_x, const std::vector<Scalar>& line_y)
+{
+    Scalar min_distance = 1e9;
+    Vector2 min_distance_pos;
+    for (int i=0; i<line_x.size(); ++i)
+    {
+        Vector2 sp, ep;
+        sp.x() = line_x.at(i);
+        sp.y() = line_y.at(i);
+        ep.x() = line_x.at((i+1)%line_x.size());
+        ep.x() = line_y.at((i+1)%line_y.size());
+
+        Vector2 vs = sp - center;
+        Vector2 ve = ep - center;
+
+        // intersect
+        if (outer(normal, vs)*outer(normal, ve) >= 0) continue;
+        Vector2 cp;
+        if (!calClosestPoint(center, sp, ep, cp)) continue;
+        if ((cp - center).norm() >= min_distance) continue;
+
+        // update 
+        min_distance = (cp - center).norm();
+        min_distance_pos = cp;
+    }
+    return min_distance_pos;
 }
 
 }
