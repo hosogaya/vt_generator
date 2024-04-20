@@ -5,6 +5,41 @@ course_prep:
   # crop_length: 1.2
   crop_length: 0.3 # prev
 
+path_optimization:
+  # method: "lap time"
+  method: "curvature"
+  speed_params: [[5.0, 3.0, -2.0, 2.0]] # [max_vel [m/s], max_long_acc [m/s^2], max_long_dec [m/s^2], max_lat_acc [m/s^2]]
+  # prev: [100.0, 100.0, -2.1, 5.1],
+  minimum_velocity: 2.0 # [m/s] This will be corrected after the optimization.
+  # minimum_velocity: 1.0 # [m/s] prev
+
+  use_minimum_turning_radius: true
+  minimum_turning_radius: 1.0
+
+  #                     　                              max_lat_acc
+  # dynamic_lat_acc =   --------------------------------------------------------------------------------------
+  #                     　                           lat_acc_max_divisor-1
+  #                     　  1 + ---------------------------------------------------------------------------
+  #                     　        1 + exp{-lat_acc_slope_inclination * (velocity - lat_acc_slope_center)}
+
+  use_dynamic_lat_acc: true
+  lat_acc_slope_center: 4.5 # [m/s]
+  lat_acc_slope_inclination: 3.0
+  lat_acc_max_divisor: 3.0
+
+  use_dynamic_dec: true
+  dec_slope_center: 4.5 # [m/s]
+  dec_slope_inclination: 3.0
+  dec_max_divisor: 2.0
+
+  use_deceleration: true # True for asymmetric acceleration and deceleration. This may be buggy.
+
+  use_direction_lock: true
+
+  curvature_calculation_points: 1
+  max_iterations: 10000
+  tolerance: 1
+
 visualization:
   bgr_list:
     [
