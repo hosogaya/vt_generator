@@ -1,8 +1,8 @@
-#include <vt_generator/csv/csv_reader.hpp>
 #include <vt_generator/util.hpp>
 #include <vt_generator/vt_generator.hpp>
 
 #include <vt_generator/csv/csv_writer.hpp>
+#include <vt_generator/csv/csv_reader_opt_curvature.hpp>
 
 #include <vt_generator/path_smoother/cost.hpp>
 #include <vt_generator/path_smoother/variable.hpp>
@@ -11,70 +11,27 @@ using namespace vt_generator;
 
 int main()
 {
-    std::vector<Scalar> xm, ym, tr_left, tr_right, outer_x, outer_y, inner_x, inner_y;
     std::vector<Scalar> curvature;
     std::vector<Vector2> normal;
     std::string csv_name = "../data/icra20getADfun23_1/icra2023_1_course_info.csv";
     const int width = 10;
-    {
-        csv::Reader csv_reader(csv_name);
-        if (!csv_reader.isOpen()) return -1;
-
-        auto indexes = thinout(csv_reader.xm(), csv_reader.ym(), 0.02);
-        // std::vector<int> indexes(csv_reader.xm().size());
-        // for (int i=0; i<indexes.size(); ++i) indexes[i] = i;
-
-        for (size_t i=0; i<indexes.size(); ++i)
-        {
-            xm.push_back(csv_reader.xm()            [indexes.at(i)]);
-            ym.push_back(csv_reader.ym()            [indexes.at(i)]);
-            tr_left.push_back(csv_reader.tr_left()  [indexes.at(i)]);
-            tr_right.push_back(csv_reader.tr_right()[indexes.at(i)]);
-            outer_x.push_back(csv_reader.outer_x()  [indexes.at(i)]);
-            outer_y.push_back(csv_reader.outer_y()  [indexes.at(i)]);
-            inner_x.push_back(csv_reader.inner_x()  [indexes.at(i)]);
-            inner_y.push_back(csv_reader.inner_y()  [indexes.at(i)]);
-        }
-    }
+    csv::Reader reader(csv_name);
+    if (!reader.isOpen()) return -1;
 
     return 1;
-    const int horizon = xm.size();
+    const int horizon = reader.size();
 
     std::cout << "horizon: " << horizon << std::endl;
     
-    // std::vector<Scalar> curvature;
-    // for (int i=0; i<horizon; ++i)
-    // {
-    //     curvature.push_back(calCurvature(xm, ym, i, width));
-    // }
     for (int i=0; i<horizon; ++i)
     {
-        normal.push_back(calNormalVector(xm, ym, i, width));
-        if (curvature[i] > 0) normal[i] = -normal[i];
+        normal.push_back(calNormalVector(reader.xm(), reader.ym(), i, width));
     } 
     std::vector<Scalar> ds;
     Scalar total = 0.0;
     for (int i=0; i<horizon; ++i)
     {
-        ds.push_back(calDs(xm, ym, i));
-    }
-
-    for (const auto k: curvature)
-    {
-        if (std::isnan(k)) 
-        {
-            std::cout << "there is nan in curvature" << std::endl;
-            return 1;
-        }
-    }
-
-    for (const auto k: ds)
-    {
-        if (std::isnan(k)) 
-        {
-            std::cout << "there is nan in ds" << std::endl;
-            return 1;
-        }
+        ds.push_back(calDs(reader.xm(), reader.ym(), i));
     }
 
     ifopt::Problem prob;
@@ -101,7 +58,7 @@ int main()
         {
             b_var[denormalizer_.acc(i)] = Bound(lon_acc_min, lon_acc_max);
             b_var[denormalizer_.steer(i)] = Bound(steer_min, steer_max);
-            b_var[denormalizer_.n(i)] = Bound(-(tr_right[i] - tread/2.0), tr_left[i] - tread/2.0);
+            // b_var[denormalizer_.n(i)] = Bound(-(tr_right[i] - tread/2.0), tr_left[i] - tread/2.0);
             b_var[denormalizer_.xi(i)] = Bound(-M_PI*30/180, M_PI*30/180);
             b_var[denormalizer_.vx(i)] = Bound(1.0, 20.0);
             b_var[denormalizer_.vy(i)] = Bound(-10.0, 10.0);
@@ -187,24 +144,21 @@ int main()
     // opt_x, opt_y, outer_width, inner_width
     // center_x, center_y, outer_x, outer_y inner_x, inner_y
     // curvature, ref_v
-    std::vector<Scalar> opt_x  (xm.size()), opt_y  (ym.size()),
-                        ref_v  (xm.size());
-    for (size_t i=0; i<xm.size(); ++i)
+    std::vector<Scalar> opt_x  (reader.size()), opt_y  (reader.size()),
+                        ref_v  (reader.size());
+    for (size_t i=0; i<reader.size(); ++i)
     {
-        auto normal = calNormalVector(xm, ym, i, width);
-        if (curvature[i] > 0) normal = -normal;
-        if (normal.norm() < 0.5) std::cout << "failed to cal normal" << std::endl;
-
-        opt_x[i]   = xm.at(i) + normal.x()*denormalizer_.denormalizeN(opt_var, i);
-        opt_y[i]   = ym.at(i) + normal.y()*denormalizer_.denormalizeN(opt_var, i);
+    
+        opt_x[i]   = reader.xm().at(i) + normal[i].x()*denormalizer_.denormalizeN(opt_var, i);
+        opt_y[i]   = reader.ym().at(i) + normal[i].y()*denormalizer_.denormalizeN(opt_var, i);
         ref_v[i]   = denormalizer_.denormalizeVx(opt_var, i);
     }
     csv::Writer path_writer("opt_trajectory.csv");
     path_writer.writeResult(opt_x,     opt_y, 
-                            tr_right,  tr_left, 
-                            xm,        ym, 
-                            outer_x,   outer_y, 
-                            inner_x,   inner_y, 
+                            reader.outer_w(),  reader.inner_w(), 
+                            reader.center_x(), reader.center_y(), 
+                            reader.outer_x(),  reader.outer_y(), 
+                            reader.inner_x(),  reader.inner_y(), 
                             curvature, ref_v, 
                             horizon);
 

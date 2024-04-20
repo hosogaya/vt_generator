@@ -14,29 +14,6 @@ inline Scalar outer(const Vector2& v1, const Vector2& v2)
     return v1.x()*v2.y() - v1.y()*v2.x();
 }
 
-inline bool calClosestPoint(const Vector2& point, const Vector2& ls, const Vector2& le, Vector2& cp)
-{
-    Vector2 vp = point - ls;
-    Vector2 ve = le - ls;
-
-    Scalar t = vp.dot(ve)/ve.norm();
-    if (t > ve.norm())
-    {
-        cp = le;
-        return false;
-    }
-    else if (t < 0.0) 
-    {
-        cp = ls;
-        return false;
-    }
-    else {
-        cp = ls + ve.normalized()*t;
-        return true;
-    }
-}
-
-
 inline std::vector<int> thinout(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym, const Scalar dist_thres)
 {
     std::vector<int> indexes{0};
@@ -86,17 +63,17 @@ inline Vector calNormalVector(const std::vector<Scalar>& xm, const std::vector<S
     int former = (index - width + xm.size())%xm.size();
     int later = (index + width)%xm.size();
     Scalar area4 = 2*((xm[index] - xm[later])*(ym[index] - ym[former])
-                    - (xm[index] - xm[former])*(ym[index] - xm[later]));
+                    - (xm[index] - xm[former])*(ym[index] - ym[later]));
 
     Scalar x_numerator1 = (ym[index] - ym[later])* (std::pow(xm[index], 2.0)
                                                   - std::pow(xm[former], 2.0)
                                                   + std::pow(ym[index], 2.0)
-                                                  - std::pow(xm[former], 2.0));
+                                                  - std::pow(ym[former], 2.0));
     
     Scalar x_numerator2 = (ym[index] - ym[former])*(std::pow(xm[index], 2.0)
-                                                 - std::pow(xm[former], 2.0)
-                                                 + std::pow(ym[index], 2.0)
-                                                 - std::pow(xm[former], 2.0));
+                                                  - std::pow(xm[later], 2.0)
+                                                  + std::pow(ym[index], 2.0)
+                                                  - std::pow(ym[later], 2.0));
 
     Scalar y_numerator1 = (xm[index] - xm[later])*(std::pow(xm[index], 2.0)
                                                  - std::pow(xm[former], 2.0)
@@ -123,6 +100,32 @@ inline Vector calNormalVector(const std::vector<Scalar>& xm, const std::vector<S
     return normal.normalized();
 }
 
+inline Vector calNormalVector2(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym, const int index, const int width = 1)
+{
+    Vector2 normal;
+    int former = (index - width + xm.size())%xm.size();
+    int later = (index + width)%xm.size();
+
+    Vector2 tangent1;
+    tangent1.x() = (xm[index] - xm[former]);
+    tangent1.y() = (ym[index] - ym[former]);
+    // tangent1.normalize();
+
+    Vector2 tangent2;
+    tangent2.x() = (xm[later] - xm[index]);
+    tangent2.x() = (ym[later] - ym[index]);
+    // tangent2.normalize();
+
+    Vector2 t = (tangent1 + tangent2) / 2;
+    // Vector2 t = tangent2;
+
+    normal.x() =-t.y();
+    normal.y() = t.x();
+
+    return normal.stableNormalized();
+}
+
+
 inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& center, const std::vector<Scalar>& line_x, const std::vector<Scalar>& line_y)
 {
     Scalar min_distance = 1e9;
@@ -140,8 +143,10 @@ inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& cente
 
         // intersect
         if (outer(normal, vs)*outer(normal, ve) >= 0) continue;
-        Vector2 cp;
-        if (!calClosestPoint(center, sp, ep, cp)) continue;
+        // Scalar amp = (outer(normal, sp) - (outer(normal, center)))/outer(ep - sp, normal);
+        // Vector2 cp = (ep - sp)*amp + sp;
+        Vector2 cp = sp;
+
         if ((cp - center).norm() >= min_distance) continue;
 
         // update 
