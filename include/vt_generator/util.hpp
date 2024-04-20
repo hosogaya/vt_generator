@@ -113,7 +113,7 @@ inline Vector calNormalVector2(const std::vector<Scalar>& xm, const std::vector<
 
     Vector2 tangent2;
     tangent2.x() = (xm[later] - xm[index]);
-    tangent2.x() = (ym[later] - ym[index]);
+    tangent2.y() = (ym[later] - ym[index]);
     // tangent2.normalize();
 
     Vector2 t = (tangent1 + tangent2) / 2;
@@ -121,8 +121,17 @@ inline Vector calNormalVector2(const std::vector<Scalar>& xm, const std::vector<
 
     normal.x() =-t.y();
     normal.y() = t.x();
+    if (index == 24)
+    {
+        std::cout << "former: " << xm[former] << ", " << ym[former] << std::endl;
+        std::cout << "index: " << xm[index] << ", " << ym[index] << std::endl;
+        std::cout << "later: " << xm[later] << ", " << ym[later] << std::endl;
+        std::cout << "t1: " << tangent1.x() << ", " << tangent2.y() << std::endl;
+        std::cout << "t2: " << tangent2.x() << ", " << tangent2.y() << std::endl;
+        std::cout << "normal: " << normal.x() << ", " << normal.y() << std::endl;
+    }
 
-    return normal.stableNormalized();
+    return normal.normalized();
 }
 
 
@@ -142,7 +151,7 @@ inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& cente
         Vector2 ve = ep - center;
 
         // intersect
-        if (outer(normal, vs)*outer(normal, ve) >= 0) continue;
+        // if (outer(normal, vs)*outer(normal, ve) >= 0) continue;
         // Scalar amp = (outer(normal, sp) - (outer(normal, center)))/outer(ep - sp, normal);
         // Vector2 cp = (ep - sp)*amp + sp;
         Vector2 cp = sp;
@@ -153,7 +162,8 @@ inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& cente
         min_distance = (cp - center).norm();
         min_distance_pos = cp;
     }
-    return min_distance_pos;
+    
+    return center + normal*min_distance;
 }
 
 }

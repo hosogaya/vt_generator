@@ -20,7 +20,7 @@ int main()
     std::vector<Vector2> normal;
     for (int i=0; i<reader.size(); ++i)
     {
-        normal.push_back(calNormalVector2(reader.xm(), reader.ym(), 10)); // towards left hand
+        normal.push_back(calNormalVector2(reader.xm(), reader.ym(), i)); // towards left hand
     }
 
     std::vector<Vector2> outer_line;
@@ -35,14 +35,16 @@ int main()
     std::vector<Scalar> outer_x, outer_y, inner_x, inner_y;
     for (int i=0; i<reader.size(); ++i)
     {
-        outer_x.push_back(reader.center_x()[i] - normal[i].x());
-        outer_y.push_back(reader.center_y()[i] - normal[i].y());
+        // outer_x.push_back(reader.center_x()[i] - normal[i].x());
+        // outer_y.push_back(reader.center_y()[i] - normal[i].y());
+        outer_x.push_back(outer_line.at(i).x());
+        outer_y.push_back(outer_line.at(i).y());
         inner_x.push_back(inner_line.at(i).x());
         inner_y.push_back(inner_line.at(i).y());
     }
     csv::Writer writer("line_modified.csv");
     writer.writeResult(reader.xm(), reader.ym(), reader.outer_w(), reader.inner_w(), 
-                      reader.center_x(), reader.center_y(), outer_x, outer_y, reader.inner_x(), reader.inner_y(), 
+                      reader.center_x(), reader.center_y(), outer_x, outer_y, inner_x, inner_y, 
                     reader.curvature(), reader.ref_v(), reader.xm().size());
 
 
