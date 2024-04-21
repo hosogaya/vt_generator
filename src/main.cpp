@@ -41,13 +41,12 @@ int main()
         Scalar Lf = 0.162;
         Scalar Lr = 0.162;
 
-        Scalar lon_acc_min =-1.5e1;
-        Scalar lon_acc_max = 1.5e1;
-        Scalar lat_acc_min =-1.0e1;
-        Scalar lat_acc_max = 1.0e1;
-        Scalar steer_min =-M_PI*20.0/180;
-        Scalar steer_max = M_PI*20.0/180;
-        Scalar tread = 0.2; // m
+        Scalar lon_acc_min =-5.0;
+        Scalar lon_acc_max = 5.0;
+        Scalar lat_acc_min =-2.0;
+        Scalar lat_acc_max = 2.0;
+        Scalar steer_min =-M_PI*30.0/180;
+        Scalar steer_max = M_PI*30.0/180;
         Scalar beta_min =-M_PI*10/180;
         Scalar beta_max = M_PI*10/180;
 
@@ -61,12 +60,13 @@ int main()
             b_var[denormalizer_.acc(i)] = Bound(lon_acc_min, lon_acc_max);
             b_var[denormalizer_.steer(i)] = Bound(steer_min, steer_max);
             b_var[denormalizer_.n(i)] = Bound(-(ref - outer).norm(), (ref - inner).norm());
-            b_var[denormalizer_.xi(i)] = Bound(-M_PI*30/180, M_PI*30/180);
-            b_var[denormalizer_.vx(i)] = Bound(1.0, 20.0);
-            b_var[denormalizer_.vy(i)] = Bound(-10.0, 10.0);
-            b_var[denormalizer_.w(i)] =  Bound(-4*M_PI, 4*M_PI);
+            b_var[denormalizer_.xi(i)] = Bound(-M_PI*45/180, M_PI*45/180);
+            b_var[denormalizer_.vx(i)] = Bound(1.0, 10.0);
+            b_var[denormalizer_.vy(i)] = Bound(-1.0, 1.0);
+            b_var[denormalizer_.w(i)] =  Bound(-2*M_PI, 2*M_PI);
         }
 
+        std::shared_ptr<Variable> var = std::make_shared<Variable>(horizon, b_var);
         VecBound b_costrants(horizon*constraints_size_);
         for (int i=0; i<horizon; ++i)
         {
@@ -77,12 +77,13 @@ int main()
             b_costrants[i*constraints_size_ + 3] = ifopt::BoundZero;
             b_costrants[i*constraints_size_ + 4] = ifopt::BoundZero;
             // lateral acc
-            b_costrants[i*constraints_size_ + 5] = Bound(lat_acc_min, lat_acc_max);
+            // b_costrants[i*constraints_size_ + 5] = Bound(lat_acc_min, lat_acc_max);
+            b_costrants[i*constraints_size_ + 5] = ifopt::NoBound;
             // slip angle
-            b_costrants[i*constraints_size_ + 6] = Bound(beta_min, beta_max);
+            // b_costrants[i*constraints_size_ + 6] = Bound(beta_min, beta_max);
+            b_costrants[i*constraints_size_ + 6] = ifopt::NoBound;
         }
 
-        std::shared_ptr<Variable> var = std::make_shared<Variable>(horizon, b_var);
         std::shared_ptr<KBM> constraint = std::make_shared<KBM>(m, Iz, Cf, Cr, Lf, Lr, reader.curvature(), ds, b_costrants, horizon);
         std::shared_ptr<TimeCost> cost = std::make_shared<TimeCost>(horizon, reader.curvature(), ds);
 
@@ -90,12 +91,15 @@ int main()
         for (int i=0; i<horizon; ++i)
         {
             x_init(denormalizer_.acc(i)) = 0.0;
-            x_init(denormalizer_.steer(i)) = 0.0;
+            x_init(denormalizer_.steer(i)) = -reader.curvature()[i];
             x_init(denormalizer_.n(i)) = 0.0;
-            x_init(denormalizer_.xi(i)) = 0.0;
+            Vector2 tangent = calTangentVector(reader.xm(), reader.ym(), i);
+            Vector2 v{reader.xm()[i], reader.ym()[i]};
+            Scalar sin_theta = outer(tangent, v)/tangent.norm()/v.norm();
+            x_init(denormalizer_.xi(i)) = -std::asin(sin_theta);
             x_init(denormalizer_.vx(i)) = -1.0;
-            x_init(denormalizer_.vy(i)) = 0.0;
-            x_init(denormalizer_.w(i)) = 0.0;
+            x_init(denormalizer_.vy(i)) = reader.curvature()[i];
+            x_init(denormalizer_.w(i)) = -reader.curvature()[i];
         }
 
         var->SetVariables(x_init);
@@ -109,19 +113,22 @@ int main()
     ifopt::IpoptSolver solver;
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
-    solver.SetOption("max_iter", 10000);
+    solver.SetOption("max_iter", 2000);
     solver.SetOption("limited_memory_max_history", 6); // default 6
     solver.SetOption("tol", 1.0e-4);
     solver.SetOption("constr_viol_tol", 0.0001);
+
+    solver.SetOption("start_with_resto", "yes");
+    solver.SetOption("required_infeasibility_reduction", 0.1);
     solver.SetOption("max_soft_resto_iters", 2);
     solver.SetOption("evaluate_orig_obj_at_resto_trial", "no");
     // solver.SetOption("least_square_init_primal", "yes");
     // solver.SetOption("least_square_init_duals", "yes");
 
-    solver.SetOption("acceptable_iter", 100);
+    solver.SetOption("acceptable_iter", 50);
     solver.SetOption("acceptable_tol", 1.0e-2);
     solver.SetOption("acceptable_constr_viol_tol", 0.001);
-    solver.SetOption("sb", "no");
+    solver.SetOption("sb", "yes");
     solver.Solve(prob);
 
     if (solver.GetReturnStatus() == 0)
@@ -161,7 +168,7 @@ int main()
     csv::Writer path_writer("opt_trajectory.csv");
     path_writer.writeResult(opt_x,     opt_y, 
                             reader.outer_w(),  reader.inner_w(), 
-                            reader.center_x(), reader.center_y(), 
+                            reader.xm(), reader.ym(), 
                             reader.outer_x(),  reader.outer_y(), 
                             reader.inner_x(),  reader.inner_y(), 
                             reader.curvature(), ref_v, 

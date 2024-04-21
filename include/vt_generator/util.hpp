@@ -134,6 +134,38 @@ inline Vector calNormalVector2(const std::vector<Scalar>& xm, const std::vector<
     return normal.normalized();
 }
 
+inline Vector calTangentVector(const std::vector<Scalar>& xm, const std::vector<Scalar>& ym, const int index, const int width = 1)
+{
+    Vector2 normal;
+    int former = (index - width + xm.size())%xm.size();
+    int later = (index + width)%xm.size();
+
+    Vector2 tangent1;
+    tangent1.x() = (xm[index] - xm[former]);
+    tangent1.y() = (ym[index] - ym[former]);
+    // tangent1.normalize();
+
+    Vector2 tangent2;
+    tangent2.x() = (xm[later] - xm[index]);
+    tangent2.y() = (ym[later] - ym[index]);
+    // tangent2.normalize();
+
+    Vector2 t = (tangent1 + tangent2) / 2;
+    // Vector2 t = tangent2;
+
+    // if (index == 24)
+    // {
+    //     std::cout << "former: " << xm[former] << ", " << ym[former] << std::endl;
+    //     std::cout << "index: " << xm[index] << ", " << ym[index] << std::endl;
+    //     std::cout << "later: " << xm[later] << ", " << ym[later] << std::endl;
+    //     std::cout << "t1: " << tangent1.x() << ", " << tangent2.y() << std::endl;
+    //     std::cout << "t2: " << tangent2.x() << ", " << tangent2.y() << std::endl;
+    //     std::cout << "normal: " << normal.x() << ", " << normal.y() << std::endl;
+    // }
+
+    return t.normalized();
+}
+
 
 inline Vector2 getClosestPointOnLine(const Vector2& normal, const Vector2& center, const std::vector<Scalar>& line_x, const std::vector<Scalar>& line_y)
 {
