@@ -121,15 +121,15 @@ inline Vector calNormalVector2(const std::vector<Scalar>& xm, const std::vector<
 
     normal.x() =-t.y();
     normal.y() = t.x();
-    if (index == 24)
-    {
-        std::cout << "former: " << xm[former] << ", " << ym[former] << std::endl;
-        std::cout << "index: " << xm[index] << ", " << ym[index] << std::endl;
-        std::cout << "later: " << xm[later] << ", " << ym[later] << std::endl;
-        std::cout << "t1: " << tangent1.x() << ", " << tangent2.y() << std::endl;
-        std::cout << "t2: " << tangent2.x() << ", " << tangent2.y() << std::endl;
-        std::cout << "normal: " << normal.x() << ", " << normal.y() << std::endl;
-    }
+    // if (index == 24)
+    // {
+    //     std::cout << "former: " << xm[former] << ", " << ym[former] << std::endl;
+    //     std::cout << "index: " << xm[index] << ", " << ym[index] << std::endl;
+    //     std::cout << "later: " << xm[later] << ", " << ym[later] << std::endl;
+    //     std::cout << "t1: " << tangent1.x() << ", " << tangent2.y() << std::endl;
+    //     std::cout << "t2: " << tangent2.x() << ", " << tangent2.y() << std::endl;
+    //     std::cout << "normal: " << normal.x() << ", " << normal.y() << std::endl;
+    // }
 
     return normal.normalized();
 }

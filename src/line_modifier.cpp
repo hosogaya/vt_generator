@@ -25,10 +25,13 @@ int main()
 
     std::vector<Vector2> outer_line;
     std::vector<Vector2> inner_line;
+    std::vector<Scalar> outer_w, inner_w;
     for (int i=0; i<reader.size(); ++i)
     {
         outer_line.push_back(getClosestPointOnLine(-normal[i], center[i], reader.outer_x(), reader.outer_y())); // right
         inner_line.push_back(getClosestPointOnLine(normal[i], center[i], reader.inner_x(), reader.inner_y())); // left
+        outer_w.push_back((outer_line.at(i) - center.at(i)).norm());
+        inner_w.push_back((inner_line.at(i) - center.at(i)).norm());
     }
 
     
@@ -43,7 +46,7 @@ int main()
         inner_y.push_back(inner_line.at(i).y());
     }
     csv::Writer writer("line_modified.csv");
-    writer.writeResult(reader.xm(), reader.ym(), reader.outer_w(), reader.inner_w(), 
+    writer.writeResult(reader.xm(), reader.ym(), outer_w, inner_w, 
                       reader.center_x(), reader.center_y(), outer_x, outer_y, inner_x, inner_y, 
                     reader.curvature(), reader.ref_v(), reader.xm().size());
 

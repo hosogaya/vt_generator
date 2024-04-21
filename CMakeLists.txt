@@ -7,19 +7,19 @@ find_package(ifopt REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(autodiff REQUIRED)
 
-# add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
-# target_include_directories(${PROJECT_NAME}
-#   PUBLIC
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>
-#   ${EIGEN3_INCLUDE_DIR}
-# )
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIR}
+)
 
-# target_link_libraries(${PROJECT_NAME}
-#   ifopt::ifopt_ipopt
-#   autodiff::autodiff
-# )
+target_link_libraries(${PROJECT_NAME}
+  ifopt::ifopt_ipopt
+  autodiff::autodiff
+)
 
 # add_executable(path_smoother src/path_smooth.cpp)
 
@@ -49,11 +49,26 @@ target_link_libraries(line_modifier
   autodiff::autodiff
 )
 
+add_executable(rmpc src/rmpc.cpp)
+
+target_include_directories(rmpc
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIR}
+)
+
+target_link_libraries(rmpc
+  ifopt::ifopt_ipopt
+  autodiff::autodiff
+)
+
 
 install(
-    # TARGETS ${PROJECT_NAME}
+    TARGETS ${PROJECT_NAME}
     # TARGETS path_smoother
     TARGETS line_modifier
+    TARGETS rmpc
 )
 
 install(

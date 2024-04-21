@@ -11,21 +11,19 @@ using namespace vt_generator;
 
 int main()
 {
-    std::vector<Scalar> curvature;
-    std::vector<Vector2> normal;
-    std::string csv_name = "../data/icra20getADfun23_1/icra2023_1_course_info.csv";
-    const int width = 10;
+    std::string csv_name = "line_modified.csv";
+    const int width = 1;
     csv::Reader reader(csv_name);
     if (!reader.isOpen()) return -1;
 
-    return 1;
     const int horizon = reader.size();
 
     std::cout << "horizon: " << horizon << std::endl;
-    
+
+    std::vector<Vector2> normal;
     for (int i=0; i<horizon; ++i)
     {
-        normal.push_back(calNormalVector(reader.xm(), reader.ym(), i, width));
+        normal.push_back(calNormalVector2(reader.xm(), reader.ym(), i, 1));
     } 
     std::vector<Scalar> ds;
     Scalar total = 0.0;
@@ -56,9 +54,13 @@ int main()
         VecBound b_var(horizon*denormalizer_.size());
         for (int i=0; i<horizon; ++i)
         {
+            Vector2 outer{reader.outer_x()[i], reader.outer_y()[i]};
+            Vector2 inner{reader.inner_x()[i], reader.inner_y()[i]};
+            Vector2 ref{reader.xm()[i], reader.ym()[i]};
+
             b_var[denormalizer_.acc(i)] = Bound(lon_acc_min, lon_acc_max);
             b_var[denormalizer_.steer(i)] = Bound(steer_min, steer_max);
-            // b_var[denormalizer_.n(i)] = Bound(-(tr_right[i] - tread/2.0), tr_left[i] - tread/2.0);
+            b_var[denormalizer_.n(i)] = Bound(-(ref - outer).norm(), (ref - inner).norm());
             b_var[denormalizer_.xi(i)] = Bound(-M_PI*30/180, M_PI*30/180);
             b_var[denormalizer_.vx(i)] = Bound(1.0, 20.0);
             b_var[denormalizer_.vy(i)] = Bound(-10.0, 10.0);
@@ -81,8 +83,8 @@ int main()
         }
 
         std::shared_ptr<Variable> var = std::make_shared<Variable>(horizon, b_var);
-        std::shared_ptr<KBM> constraint = std::make_shared<KBM>(m, Iz, Cf, Cr, Lf, Lr, curvature, ds, b_costrants, horizon);
-        std::shared_ptr<TimeCost> cost = std::make_shared<TimeCost>(horizon, curvature, ds);
+        std::shared_ptr<KBM> constraint = std::make_shared<KBM>(m, Iz, Cf, Cr, Lf, Lr, reader.curvature(), ds, b_costrants, horizon);
+        std::shared_ptr<TimeCost> cost = std::make_shared<TimeCost>(horizon, reader.curvature(), ds);
 
         Vector x_init(horizon*denormalizer_.size());
         for (int i=0; i<horizon; ++i)
@@ -102,6 +104,8 @@ int main()
         prob.AddCostSet(cost);
     }
 
+    std::cout << "built problem" << std::endl;
+
     ifopt::IpoptSolver solver;
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
@@ -117,6 +121,7 @@ int main()
     solver.SetOption("acceptable_iter", 100);
     solver.SetOption("acceptable_tol", 1.0e-2);
     solver.SetOption("acceptable_constr_viol_tol", 0.001);
+    solver.SetOption("sb", "no");
     solver.Solve(prob);
 
     if (solver.GetReturnStatus() == 0)
@@ -159,7 +164,7 @@ int main()
                             reader.center_x(), reader.center_y(), 
                             reader.outer_x(),  reader.outer_y(), 
                             reader.inner_x(),  reader.inner_y(), 
-                            curvature, ref_v, 
+                            reader.curvature(), ref_v, 
                             horizon);
 
     return 1;
