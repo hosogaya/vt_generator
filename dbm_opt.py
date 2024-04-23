@@ -35,14 +35,18 @@ class DbmPathOpt:
         
         self.min_turn_radius = 0.8
         self.n_cal_curv_point = 2
-        # longitudial acc
+        # longitudinal acc
         self.max_lon_acc = 10.0
         self.min_lon_acc = -2.0
         # lateral acc
-        self.min_lat_acc = -5.0
-        self.max_lat_acc =  5.0
+        self.min_lat_acc = -3.0
+        self.max_lat_acc =  3.0
+        # longitudinal velocity
         self.min_vx = 0.1
-        self.max_vx = 10.0
+        self.max_vx = 10.
+        # lateral velocity
+        self.min_vy = -3.0
+        self.max_vy = 3.0
         
     def denomalize(self, norm_pos_list):
         denorm_pos_list = []
@@ -90,7 +94,7 @@ class DbmPathOpt:
                 
         
         for i in range(horizon):
-            optimizer.set_initial(self.norm_pos_list[i], 0.5)
+            optimizer.set_initial(self.norm_pos_list[i], init_norm_pos[i])
             optimizer.set_initial(self.yaw_list[i], init_yaw_list[i])
             optimizer.set_initial(self.vx_list[i], 1.0)
             optimizer.set_initial(self.vy_list[i], 0.0)
@@ -109,7 +113,7 @@ class DbmPathOpt:
             
             evaluation += self.dt_list[i]
             evaluation += power(self.acc_list[(i+1)%horizon] - self.acc_list[i], 2.0) 
-            evaluation += power(self.steer_list[(i+1)%horizon] - self.steer_list[i], 2.0)
+            # evaluation += power(self.steer_list[(i+1)%horizon] - self.steer_list[i], 2.0)
             # evaluation += power(self.vx_list[(i+1)%horizon] - self.vx_list[i], 2.0)
             # evaluation += power(self.vy_list[(i+1)%horizon] - self.vy_list[i], 2.0)
             
@@ -173,8 +177,8 @@ class DbmPathOpt:
             # optimizer.subject_to(self.yaw_list[i] < 3.14)
             optimizer.subject_to(self.vx_list[i] > self.min_vx)
             optimizer.subject_to(self.vx_list[i] < self.max_vx)
-            optimizer.subject_to(self.vy_list[i] >-3.0)
-            optimizer.subject_to(self.vy_list[i] < 3.0)
+            optimizer.subject_to(self.vy_list[i] > self.min_vy)
+            optimizer.subject_to(self.vy_list[i] < self.max_vy)
             optimizer.subject_to(self.omega_list[i] >-2*3.14)
             optimizer.subject_to(self.omega_list[i] < 2*3.14)
             optimizer.subject_to(self.dt_list[i] > 0)
