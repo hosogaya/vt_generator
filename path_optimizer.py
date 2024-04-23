@@ -97,7 +97,7 @@ class PathOptimizer:
         denorm_pos_list = self.denormalize(self.norm_pos_list)
         for i in range(N):
             # declare objective
-            evaluation += 10*pow(self.curv_list[i] - self.curv_list[i-1], 2)# + pow(self.curv_list[i], 2.0)
+            evaluation += pow(self.curv_list[i] - self.curv_list[i-1], 2)# + pow(self.curv_list[i], 2.0)
 
             # declare constraints
             optimizer.subject_to(

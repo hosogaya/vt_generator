@@ -1,5 +1,5 @@
 course_prep:
-  is_clockwise: false
+  is_clockwise: True
   interpolation_max_gap: 0.01
   thin_out_min_gap: 0.05
   # crop_length: 1.2
@@ -14,7 +14,7 @@ path_optimization:
   # minimum_velocity: 1.0 # [m/s] prev
 
   use_minimum_turning_radius: true
-  minimum_turning_radius: 1.0
+  minimum_turning_radius: 0.7
 
   #                     　                              max_lat_acc
   # dynamic_lat_acc =   --------------------------------------------------------------------------------------

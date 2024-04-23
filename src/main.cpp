@@ -41,12 +41,12 @@ int main()
         Scalar Lf = 0.162;
         Scalar Lr = 0.162;
 
-        Scalar lon_acc_min =-5.0;
-        Scalar lon_acc_max = 5.0;
-        Scalar lat_acc_min =-2.0;
-        Scalar lat_acc_max = 2.0;
-        Scalar steer_min =-M_PI*30.0/180;
-        Scalar steer_max = M_PI*30.0/180;
+        Scalar lon_acc_min =-0.5;
+        Scalar lon_acc_max = 1.0;
+        Scalar lat_acc_min =-0.3;
+        Scalar lat_acc_max = 0.3;
+        Scalar steer_min =-M_PI*25.0/180;
+        Scalar steer_max = M_PI*25.0/180;
         Scalar beta_min =-M_PI*10/180;
         Scalar beta_max = M_PI*10/180;
 
@@ -91,7 +91,7 @@ int main()
         for (int i=0; i<horizon; ++i)
         {
             x_init(denormalizer_.acc(i)) = 0.0;
-            x_init(denormalizer_.steer(i)) = -reader.curvature()[i];
+            x_init(denormalizer_.steer(i)) = 0.0;
             x_init(denormalizer_.n(i)) = 0.0;
             Vector2 tangent = calTangentVector(reader.xm(), reader.ym(), i);
             Vector2 v{reader.xm()[i], reader.ym()[i]};
@@ -113,7 +113,7 @@ int main()
     ifopt::IpoptSolver solver;
     solver.SetOption("print_level", 5);
     solver.SetOption("max_cpu_time", 10.0e20);
-    solver.SetOption("max_iter", 2000);
+    solver.SetOption("max_iter", 20000);
     solver.SetOption("limited_memory_max_history", 6); // default 6
     solver.SetOption("tol", 1.0e-4);
     solver.SetOption("constr_viol_tol", 0.0001);

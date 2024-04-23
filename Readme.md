@@ -1,14 +1,16 @@
 # Vhicle trajectory generator 
 
-# 評価関数
-* 走破時間の最小化
+# How to use
+1. Copy your `<map_name>.png` and `<map_name>.yaml` to `map` directory
+2. Plan the smooth path with a command `python3 path_optimizer.py <map_name>` (smooth path is a path which is minimized the curvature change). The output file is `data/<map_name>/opt_path_curvature.csv`
+3. Calculate the normal vector of smooth path and bounds of the course. The output file is `build/line_modified.csv`
+```shell
+mkdir -p build
+cd build 
+cmake ..
+make
+./line_modifier
+```
+4. Plan optimal path considering Dynamic Bycicle model by `python3 dbm_opt.py`
+The output file is `ego_ref_waypoint.csv`.
 
-# 制約条件
-* 状態方程式
-* 横加速度
-* 縦加速度* 縦加速度
-* 操舵の制限
-* すべり角（なくてもいいかも）
-
-# 改良案
-* curvatureの計算において隣の点から取って来ると必要以上に大きな曲率がでるから、すこし離れたところから取ってくるといい。
