@@ -238,7 +238,7 @@ class DbmPathOpt:
         
         self.optimize(optimizer=optimizer)
         
-    def save_result(self, file_name):
+    def save_result(self, file_name, true_line_pos):
         with open(file_name, "w", newline="") as f:
             labels = [
                 "opt_x",
@@ -253,6 +253,10 @@ class DbmPathOpt:
                 "inner_y",
                 "curvature",
                 "ref_v",
+                "true_outer_x",
+                "true_outer_y",
+                "true_inner_x",
+                "true_inner_y",
                 "yaw",
                 "vx",
                 "vy",
@@ -276,8 +280,8 @@ class DbmPathOpt:
             steer_list = self.solution.value(self.steer_list)
             dt_list = self.solution.value(self.dt_list)
             for (opt_point, line, vel, center, curv, 
-                 yaw, vx, vy, omega, acc, steer, dt) in zip(pos_list, self.line_list, vel_list, self.init_path, curvature_list, 
-                                                            yaw_list, vel_list, vy_list,omega_list, acc_list, steer_list, dt_list):
+                 yaw, vx, vy, omega, acc, steer, dt, true_line) in zip(pos_list, self.line_list, vel_list, self.init_path, curvature_list, 
+                                                            yaw_list, vel_list, vy_list,omega_list, acc_list, steer_list, dt_list, true_line_pos):
                 data = {
                     "opt_x": opt_point[0],
                     "opt_y": opt_point[1],
@@ -291,6 +295,10 @@ class DbmPathOpt:
                     "inner_y": line[0][1],
                     "curvature": curv,
                     "ref_v": vel,
+                    "true_outer_x": true_line[1][0],
+                    "true_outer_y": true_line[1][1],
+                    "true_inner_x": true_line[0][0],
+                    "true_inner_y": true_line[0][1],
                     "yaw": yaw,
                     "vx": vx,
                     "vy": vy,
@@ -308,23 +316,28 @@ def read_csv(file_name):
     
     path = []
     line_pos = []
+    true_line_pos = []
     for i in range(df.shape[0]):
         path.append(np.array([df["opt_x"][i], df["opt_y"][i]]))
         line_pos.append([
                         np.array([df["inner_x"][i], df["inner_y"][i]]), 
                         np.array([df["outer_x"][i], df["outer_y"][i]])
                         ])
+        true_line_pos.append([
+            np.array([df["true_inner_x"][i], df["true_inner_y"][i]]), 
+            np.array([df["true_outer_x"][i], df["true_outer_y"][i]])
+        ])
         
-    return path, line_pos
+    return path, line_pos, true_line_pos
 
 
 def main():
     file_name = "build/line_modified.csv"
-    path, line_pos = read_csv(file_name=file_name)
+    path, line_pos, true_line_pos = read_csv(file_name=file_name)
     
     prob = DbmPathOpt(line_list=line_pos, init_path=path)
     prob.solve()
-    prob.save_result("ego_ref_waypoint.csv")
+    prob.save_result("ego_ref_waypoint.csv", true_line_pos)
 
 if __name__ == "__main__":
     main()

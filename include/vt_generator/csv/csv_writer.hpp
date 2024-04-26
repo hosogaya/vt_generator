@@ -24,6 +24,8 @@ public:
                      const std::vector<Scalar>& outer_x,  const std::vector<Scalar>& outer_y,
                      const std::vector<Scalar>& inner_x,  const std::vector<Scalar>& inner_y,
                      const std::vector<Scalar>& curvature,const std::vector<Scalar>& ref_v,
+                     const std::vector<Scalar>& true_outer_x, const std::vector<Scalar>& true_outer_y,
+                     const std::vector<Scalar>& true_inner_x, const std::vector<Scalar>& true_inner_y,
                      const int horizon);
 private:
     bool is_open_ = false;
@@ -73,6 +75,8 @@ void Writer::writeResult(const std::vector<Scalar>& opt_x,    const std::vector<
                          const std::vector<Scalar>& outer_x,  const std::vector<Scalar>& outer_y,
                          const std::vector<Scalar>& inner_x,  const std::vector<Scalar>& inner_y,
                          const std::vector<Scalar>& curvature,const std::vector<Scalar>& ref_v, 
+                         const std::vector<Scalar>& true_outer_x, const std::vector<Scalar>& true_outer_y,
+                         const std::vector<Scalar>& true_inner_x, const std::vector<Scalar>& true_inner_y,
                          const int horizon)
 {
     output_file_ << "opt_x"       << ","
@@ -86,7 +90,11 @@ void Writer::writeResult(const std::vector<Scalar>& opt_x,    const std::vector<
                  << "inner_x"     << ","
                  << "inner_y"     << ","
                  << "curvature"   << ","
-                 << "ref_v"       << std::endl;
+                 << "ref_v"       << ","
+                 << "true_outer_x"       << ","
+                 << "true_outer_y"       << ","
+                 << "true_inner_x"       << ","
+                 << "true_inner_y"       << std::endl;
 
     for (int i=0; i<horizon; ++i)
     {
@@ -101,7 +109,11 @@ void Writer::writeResult(const std::vector<Scalar>& opt_x,    const std::vector<
                      << inner_x[i]   << ","
                      << inner_y[i]   << ","
                      << curvature[i] << ","
-                     << ref_v[i]     << std::endl;
+                     << ref_v[i]     << ","
+                     << true_outer_x[i]     << ","
+                     << true_outer_y[i]     << ","
+                     << true_inner_x[i]     << ","
+                     << true_inner_y[i]     << std::endl;
     }
 }
 

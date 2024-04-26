@@ -27,6 +27,10 @@ public:
     const std::vector<double>& center_x() const {return center_x_;}
     const std::vector<double>& center_y() const {return center_y_;}
     const std::vector<double>& ref_v() const {return ref_v_;}
+    const std::vector<double>& true_outer_x() const {return true_outer_x_;}
+    const std::vector<double>& true_outer_y() const {return true_outer_y_;}
+    const std::vector<double>& true_inner_x() const {return true_inner_x_;}
+    const std::vector<double>& true_inner_y() const {return true_inner_y_;}
     int size() const {return size_;}
     bool isOpen() const {return is_open_;}
 
@@ -43,6 +47,10 @@ private:
     std::vector<double> inner_y_;
     std::vector<double> curvature_;
     std::vector<double> ref_v_;
+    std::vector<double> true_outer_x_;
+    std::vector<double> true_outer_y_;
+    std::vector<double> true_inner_x_;
+    std::vector<double> true_inner_y_;
     int size_;
     bool is_open_ = false;
 };
@@ -101,6 +109,18 @@ Reader::Reader(const std::string& file_name, bool has_header)
 
         std::getline(i_stream, str_conma_buf, ',');
         ref_v_.push_back(std::stod(str_conma_buf));
+
+        std::getline(i_stream, str_conma_buf, ',');
+        true_outer_x_.push_back(std::stod(str_conma_buf));
+        
+        std::getline(i_stream, str_conma_buf, ',');
+        true_outer_y_.push_back(std::stod(str_conma_buf));
+
+        std::getline(i_stream, str_conma_buf, ',');
+        true_inner_x_.push_back(std::stod(str_conma_buf));
+
+        std::getline(i_stream, str_conma_buf, ',');
+        true_inner_y_.push_back(std::stod(str_conma_buf));
     }
 }
 

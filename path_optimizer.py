@@ -5,8 +5,9 @@ import os
 from course_detection import detect_course, get_yaml_obj, check_paths
 from casadi import Opti, sumsqr, norm_2, power, sqrt, exp
 from tabulate import tabulate
-from math import dist
+from math import dist, floor
 from numpy import ndarray, linalg, array, flipud, uint16
+import numpy as np
 from typing import Tuple, List
 
 
@@ -294,7 +295,7 @@ def box_print(text) -> None:
 
 
 def save_course_info(
-    file_path, opt_path, lateral_line_list, curv_list, vel_list
+    file_path, opt_path, lateral_line_list, curv_list, vel_list, no_margined_line_list
 ) -> None:
     with open(file_path, "w", newline="") as f:
         labels = [
@@ -310,11 +311,15 @@ def save_course_info(
             "inner_y",
             "curvature",
             "ref_v",
+            "true_outer_x",
+            "true_outer_y",
+            "true_inner_x",
+            "true_inner_y",
         ]
         writer = csv.DictWriter(f, fieldnames=labels)
         writer.writeheader()
-        for opt_point, lat_line, curvature, velocity in zip(
-            opt_path, lateral_line_list, curv_list, vel_list
+        for opt_point, lat_line, curvature, velocity, nm_line in zip(
+            opt_path, lateral_line_list, curv_list, vel_list, no_margined_line_list
         ):
             outer_width = dist(opt_point, lat_line[0])
             inner_width = dist(opt_point, lat_line[1])
@@ -333,6 +338,10 @@ def save_course_info(
                 "inner_y": lat_line[1][1],
                 "curvature": curvature,
                 "ref_v": velocity,
+                "true_outer_x": nm_line[0][0],
+                "true_outer_y": nm_line[0][1],
+                "true_inner_x": nm_line[1][0],
+                "true_inner_y": nm_line[1][1],
             }
             writer.writerow(data)
 
@@ -387,9 +396,20 @@ def optimize_path(map_name: str = None) -> Tuple[List[ndarray], List[float]]:
     dec_max_divisor = path_yaml_obj["path_optimization"]["dec_max_divisor"]
     bgr_list = path_yaml_obj["visualization"]["bgr_list"]
     line_thickness = path_yaml_obj["visualization"]["line_thickness"]
+    m_crop_length = path_yaml_obj["course_prep"]["crop_length"]
+    
 
     # preperate course
-    lat_line_creator, line_list_thinned = detect_course(map_name)
+    lat_line_creator, line_list_no_margin = detect_course(map_name, 0.0)
+    lat_line_creator, line_list_thinned = detect_course(map_name, m_crop_length)
+
+    print("margined lat_line_list size: {}".format(len(line_list_thinned)))
+    print("no marginedlat_line_list size: {}".format(len(line_list_no_margin)))
+    
+    if (len(line_list_no_margin) > len(line_list_thinned)):
+        index_list = np.linspace(0, len(line_list_no_margin)-1, len(line_list_thinned)).astype(int)
+        adjusted_list = [line for idx, line in enumerate(line_list_no_margin)  if idx in index_list]
+        print(len(adjusted_list))
 
     # optimize path
     path_optimizer = PathOptimizer(line_list_thinned)
@@ -505,7 +525,7 @@ def optimize_path(map_name: str = None) -> Tuple[List[ndarray], List[float]]:
                 )
             elif method == "curvature":
                 file_path = os.path.join(out_dir, f"opt_path_curvature.csv")
-        save_course_info(file_path, opt_path, line_list_thinned, curv_list, vel_list)
+        save_course_info(file_path, opt_path, line_list_thinned, curv_list, vel_list, adjusted_list)
         file_path_list.append(file_path)
     print("Saved opt paths and course info as csv files.")
 

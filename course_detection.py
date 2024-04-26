@@ -640,7 +640,7 @@ def check_paths(map_name: str) -> Tuple[str, str, str]:
     return map_yaml_file, out_dir, config_file
 
 
-def detect_course(map_name: str = None) -> Tuple[LateralLineCreator, List[List[List[float]]]]:
+def detect_course(map_name: str = None, m_crop_length: float = 0.0) -> Tuple[LateralLineCreator, List[List[List[float]]]]:
     if map_name is None:
         raise ValueError("map_name is None. \nPlease specify map_name.\n\n\tpython3 course_detection.py [map_name]\n\tpython3 path_optimizer.py [map_name]\n")
 
@@ -652,7 +652,7 @@ def detect_course(map_name: str = None) -> Tuple[LateralLineCreator, List[List[L
     is_clockwise = path_yaml_obj["course_prep"]["is_clockwise"]
     m_max_gap = path_yaml_obj["course_prep"]["interpolation_max_gap"]
     m_min_gap = path_yaml_obj["course_prep"]["thin_out_min_gap"]
-    m_crop_length = path_yaml_obj["course_prep"]["crop_length"]
+    # m_crop_length = path_yaml_obj["course_prep"]["crop_length"]
     bgr_list = path_yaml_obj["visualization"]["bgr_list"]
 
     # preperate course
@@ -683,32 +683,32 @@ def detect_course(map_name: str = None) -> Tuple[LateralLineCreator, List[List[L
 
     # save image with contours
     img = lat_line_creator.draw_contours(map_img_w_contour_points.copy(), contour_list)
-    file_path = os.path.join(out_dir, f"{map_name}_w_contours.png")
+    file_path = os.path.join(out_dir, f"{map_name}_w_contours_margined_{m_crop_length}.png")
     cv2.imwrite(file_path, img)
 
     # save image with lateral lines
     img = lat_line_creator.draw_lines(map_img_w_contour_points.copy(), line_list_raw)
-    file_path = os.path.join(out_dir, f"{map_name}_w_lateral_lines_raw.png")
+    file_path = os.path.join(out_dir, f"{map_name}_w_lateral_lines_raw_margined_{m_crop_length}.png")
     cv2.imwrite(file_path, img)
 
     # save image with overlap free lateral lines
     img = lat_line_creator.draw_lines(map_img_w_contour_points.copy(), line_list_no_overlap)
-    file_path = os.path.join(out_dir, f"{map_name}_w_overlap_free_lines.png")
+    file_path = os.path.join(out_dir, f"{map_name}_w_overlap_free_lines_margined_{m_crop_length}.png")
     cv2.imwrite(file_path, img)
 
     # save image with adjusted lateral lines
     img = lat_line_creator.draw_lines(map_img_w_contour_points.copy(), line_list_thinned)
-    file_path = os.path.join(out_dir, f"{map_name}_w_lateral_lines_adjusted.png")
+    file_path = os.path.join(out_dir, f"{map_name}_w_lateral_lines_adjusted_margined_{m_crop_length}.png")
     cv2.imwrite(file_path, img)
 
     # save image with center lines
     img = map_img.copy()
     img = lat_line_creator.draw_polyline(map_img.copy(), center_points)
-    file_path = os.path.join(out_dir, f"{map_name}_w_center_line.png")
+    file_path = os.path.join(out_dir, f"{map_name}_w_center_line_margined_{m_crop_length}.png")
     cv2.imwrite(file_path, img)
 
     # save course data as csv
-    file_path = os.path.join(out_dir, f"{map_name}_course_info.csv")
+    file_path = os.path.join(out_dir, f"{map_name}_course_info_margined_{m_crop_length}.csv")
     with open(file_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["# x_m", "y_m", "w_tr_right", "w_tr_left", "outer_x", "outer_y", "inner_x", "inner_y"])

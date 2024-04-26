@@ -48,7 +48,8 @@ int main()
     csv::Writer writer("line_modified.csv");
     writer.writeResult(reader.xm(), reader.ym(), outer_w, inner_w, 
                       reader.center_x(), reader.center_y(), outer_x, outer_y, inner_x, inner_y, 
-                    reader.curvature(), reader.ref_v(), reader.xm().size());
+                    reader.curvature(), reader.ref_v(), reader.true_outer_x(), reader.true_outer_y(), 
+                    reader.true_inner_x(), reader.true_inner_y(), reader.xm().size());
 
 
     return 1;
