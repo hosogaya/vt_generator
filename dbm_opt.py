@@ -34,16 +34,16 @@ class DbmPathOpt:
         self.init_path = init_path
         
         self.min_turn_radius = 0.8
-        self.n_cal_curv_point = 2
+        self.n_cal_curv_point = 3
         # longitudinal acc
         self.max_lon_acc = 10.0
-        self.min_lon_acc = -2.0
+        self.min_lon_acc = -7
         # lateral acc
-        self.min_lat_acc = -3.0
-        self.max_lat_acc =  3.0
+        self.min_lat_acc = -5.0
+        self.max_lat_acc =  5.0
         # longitudinal velocity
-        self.min_vx = 0.1
-        self.max_vx = 10.
+        self.min_vx =1.5
+        self.max_vx =7.0
         # lateral velocity
         self.min_vy = -3.0
         self.max_vy = 3.0
@@ -96,7 +96,7 @@ class DbmPathOpt:
         for i in range(horizon):
             optimizer.set_initial(self.norm_pos_list[i], init_norm_pos[i])
             optimizer.set_initial(self.yaw_list[i], init_yaw_list[i])
-            optimizer.set_initial(self.vx_list[i], 1.0)
+            optimizer.set_initial(self.vx_list[i], 2.0)
             optimizer.set_initial(self.vy_list[i], 0.0)
             optimizer.set_initial(self.omega_list[i], (init_yaw_list[(i+1)%horizon] - init_yaw_list[i]) / 0.05)
             optimizer.set_initial(self.acc_list[i], 0.0)
@@ -111,10 +111,10 @@ class DbmPathOpt:
             ff = -self.Cf*slip_f
             fr = -self.Cr*slip_r
             
-            evaluation += self.dt_list[i]
-            evaluation += power(self.acc_list[(i+1)%horizon] - self.acc_list[i], 2.0) 
-            # evaluation += power(self.steer_list[(i+1)%horizon] - self.steer_list[i], 2.0)
-            # evaluation += power(self.vx_list[(i+1)%horizon] - self.vx_list[i], 2.0)
+            evaluation += 2*self.dt_list[i]
+            # evaluation += power(self.acc_list[(i+1)%horizon] - self.acc_list[i], 2.0) 
+            evaluation += power(self.steer_list[(i+1)%horizon] - self.steer_list[i], 2.0)
+            evaluation += power(self.vx_list[(i+1)%horizon] - self.vx_list[i], 2.0)
             # evaluation += power(self.vy_list[(i+1)%horizon] - self.vy_list[i], 2.0)
             
             ## state equation
@@ -171,16 +171,16 @@ class DbmPathOpt:
                                 )*self.dt_list[i]/self.Iz)
             
             # state
-            optimizer.subject_to(self.norm_pos_list[i] >= 0.1)
-            optimizer.subject_to(self.norm_pos_list[i] <= 0.9)
+            optimizer.subject_to(self.norm_pos_list[i] >= 0.05)
+            optimizer.subject_to(self.norm_pos_list[i] <= 0.95)
             # optimizer.subject_to(self.yaw_list[i] >-3.14)
             # optimizer.subject_to(self.yaw_list[i] < 3.14)
             optimizer.subject_to(self.vx_list[i] > self.min_vx)
             optimizer.subject_to(self.vx_list[i] < self.max_vx)
             optimizer.subject_to(self.vy_list[i] > self.min_vy)
             optimizer.subject_to(self.vy_list[i] < self.max_vy)
-            optimizer.subject_to(self.omega_list[i] >-2*3.14)
-            optimizer.subject_to(self.omega_list[i] < 2*3.14)
+            optimizer.subject_to(self.omega_list[i] >-5*3.14)
+            optimizer.subject_to(self.omega_list[i] < 5*3.14)
             optimizer.subject_to(self.dt_list[i] > 0)
             # input
             optimizer.subject_to(self.acc_list[i] > self.min_lon_acc)
@@ -189,10 +189,11 @@ class DbmPathOpt:
             optimizer.subject_to(self.steer_list[i] < 0.436) # 25 deg
             
             # slip angle
-            optimizer.subject_to(slip_f >-0.17453) # 10deg
-            optimizer.subject_to(slip_f < 0.17453)
-            optimizer.subject_to(slip_r >-0.17453) # 10deg
-            optimizer.subject_to(slip_r < 0.17453)
+            sigmoid = 0.087266*1./1.+exp(-(self.vx_list[i] - 1.5))
+            optimizer.subject_to(slip_f >-0.17453 - sigmoid) # 10 ~ 15deg
+            optimizer.subject_to(slip_f < 0.17453 + sigmoid)
+            optimizer.subject_to(slip_r >-0.17453 - sigmoid) # 10 ~ 15deg
+            optimizer.subject_to(slip_r < 0.17453 + sigmoid)
             
             # lateral acc
             optimizer.subject_to((ff*cos(self.steer_list[i]) + fr) > self.min_lat_acc*self.m)

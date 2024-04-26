@@ -1,5 +1,5 @@
 course_prep:
-  is_clockwise: True
+  is_clockwise: false
   interpolation_max_gap: 0.01
   thin_out_min_gap: 0.05
   # crop_length: 1.2
