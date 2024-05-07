@@ -42,7 +42,7 @@ class DbmPathOpt:
         self.min_lat_acc = -5.0
         self.max_lat_acc =  5.0
         # longitudinal velocity
-        self.min_vx =1.5
+        self.min_vx =1.0
         self.max_vx =7.0
         # lateral velocity
         self.min_vy = -3.0
@@ -111,11 +111,15 @@ class DbmPathOpt:
             ff = -self.Cf*slip_f
             fr = -self.Cr*slip_r
             
-            evaluation += 2*self.dt_list[i]
+            evaluation += 3*self.dt_list[i]
             # evaluation += power(self.acc_list[(i+1)%horizon] - self.acc_list[i], 2.0) 
             evaluation += power(self.steer_list[(i+1)%horizon] - self.steer_list[i], 2.0)
             evaluation += power(self.vx_list[(i+1)%horizon] - self.vx_list[i], 2.0)
             # evaluation += power(self.vy_list[(i+1)%horizon] - self.vy_list[i], 2.0)
+            
+            # evaluation += 5*power(calCurvature(self.denorm_pos_list[(i-self.n_cal_curv_point)], self.denorm_pos_list[i], self.denorm_pos_list[(i+self.n_cal_curv_point)%horizon])
+            #                   - calCurvature(self.denorm_pos_list[(i-self.n_cal_curv_point+1)%horizon], self.denorm_pos_list[(i+1)%horizon], self.denorm_pos_list[(i+1+self.n_cal_curv_point)%horizon])
+            #                   , 2.0)
             
             ## state equation
             # x

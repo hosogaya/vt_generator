@@ -6,7 +6,7 @@
 using namespace vt_generator;
 int main()
 {
-    std::string file_name = "../data/exp20240424/opt_path_curvature.csv";
+    std::string file_name = "../data/exp20240507/opt_path_curvature.csv";
     csv::Reader reader(file_name);
 
     // cal center pos
